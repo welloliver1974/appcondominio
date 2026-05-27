@@ -60,6 +60,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     chatInputForm: document.getElementById("chat-input-form"),
     chatUserInput: document.getElementById("chat-user-input"),
     quickChips: document.querySelectorAll(".chip"),
+    chatImageInput: document.getElementById("chat-image-input"),
+    btnAttachImage: document.getElementById("btn-attach-image"),
+    chatImagePreviewContainer: document.getElementById("chat-image-preview-container"),
+    chatImagePreview: document.getElementById("chat-image-preview"),
+    btnRemoveImage: document.getElementById("btn-remove-image"),
     
     // Config Page
     tursoConfigForm: document.getElementById("turso-config-form"),
@@ -67,6 +72,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     tursoToken: document.getElementById("turso-token"),
     btnSaveTurso: document.getElementById("btn-save-turso"),
     btnDisconnectTurso: document.getElementById("btn-disconnect-turso"),
+    
+    // LLM Config
+    llmConfigForm: document.getElementById("llm-config-form"),
+    llmUrl: document.getElementById("llm-url"),
+    llmModel: document.getElementById("llm-model"),
+    llmKey: document.getElementById("llm-key"),
+    btnSaveLlm: document.getElementById("btn-save-llm"),
     btnExportData: document.getElementById("btn-export-data"),
     btnImportData: document.getElementById("btn-import-data"),
     btnResetData: document.getElementById("btn-reset-data"),
@@ -646,28 +658,74 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ==========================================================================
   // VIEW LOGIC: IA ASSISTANTE / CHAT
   // ==========================================================================
+  let currentAttachedImageBase64 = null;
+
+  if (elements.btnAttachImage) {
+    elements.btnAttachImage.addEventListener("click", () => {
+      elements.chatImageInput.click();
+    });
+  }
+
+  if (elements.chatImageInput) {
+    elements.chatImageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        currentAttachedImageBase64 = ev.target.result;
+        elements.chatImagePreview.src = currentAttachedImageBase64;
+        elements.chatImagePreviewContainer.classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (elements.btnRemoveImage) {
+    elements.btnRemoveImage.addEventListener("click", () => {
+      currentAttachedImageBase64 = null;
+      elements.chatImagePreview.src = "";
+      elements.chatImagePreviewContainer.classList.add("hidden");
+      elements.chatImageInput.value = "";
+    });
+  }
+
   if (elements.chatInputForm) {
     elements.chatInputForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const prompt = elements.chatUserInput.value.trim();
-      if (!prompt) return;
+      const imagePayload = currentAttachedImageBase64;
+      
+      if (!prompt && !imagePayload) return;
 
-      appendChatMessage("user", prompt);
+      if (imagePayload) {
+        appendChatMessage("user", prompt ? `${prompt} [Imagem Anexada]` : "[Imagem Anexada]");
+        elements.btnRemoveImage.click(); // clear image attachment state
+      } else {
+        appendChatMessage("user", prompt);
+      }
+      
       elements.chatUserInput.value = "";
 
       // Simulate thinking animation
       const thinkingEl = appendThinkingBubble();
       
+      // Delay so UI updates
       setTimeout(async () => {
-        thinkingEl.remove();
-        const response = await window.condoAi.processCommand(prompt);
-        appendChatMessage("system", response.message);
-        
-        // Refresh app state if action happened
-        if (response.actionExecuted) {
-          updateDashboardData();
+        try {
+          const response = await window.condoAi.processCommand(prompt, imagePayload);
+          thinkingEl.remove();
+          appendChatMessage("system", response.message);
+          
+          // Refresh app state if action happened
+          if (response.actionExecuted) {
+            updateDashboardData();
+          }
+        } catch (error) {
+          thinkingEl.remove();
+          appendChatMessage("system", "🤖 **Erro:** Não foi possível me conectar com o provedor de IA. Verifique as configurações (URL e API Key).");
+          console.error(error);
         }
-      }, 750);
+      }, 50);
     });
   }
 
@@ -753,6 +811,29 @@ document.addEventListener("DOMContentLoaded", async () => {
       elements.tursoUrl.value = "";
       elements.tursoToken.value = "";
       showToast('info', 'Desconectado', 'Turso desconectado. O app voltou ao modo offline/local.');
+    });
+  }
+
+  // LLM Config Load
+  const savedLlmUrl = localStorage.getItem('llm_url');
+  const savedLlmModel = localStorage.getItem('llm_model');
+  const savedLlmKey = localStorage.getItem('llm_key');
+  if (savedLlmUrl && elements.llmUrl) elements.llmUrl.value = savedLlmUrl;
+  if (savedLlmModel && elements.llmModel) elements.llmModel.value = savedLlmModel;
+  if (savedLlmKey && elements.llmKey) elements.llmKey.value = savedLlmKey;
+
+  if (elements.llmConfigForm) {
+    elements.llmConfigForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const url = elements.llmUrl.value.trim();
+      const model = elements.llmModel.value.trim();
+      const key = elements.llmKey.value.trim();
+      
+      localStorage.setItem('llm_url', url);
+      localStorage.setItem('llm_model', model);
+      localStorage.setItem('llm_key', key);
+      
+      showToast('success', 'IA Configurada', 'As configurações do provedor LLM foram salvas.');
     });
   }
 

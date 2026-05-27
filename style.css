@@ -1078,6 +1078,49 @@ input:focus, select:focus {
   font-size: 1.2rem;
 }
 
+.btn-icon {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  width: 45px;
+  height: 45px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btn-icon:hover {
+  background: var(--surface-hover);
+  color: var(--primary);
+  border-color: var(--primary-glow);
+}
+
+#chat-image-preview-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-top: 0.75rem;
+}
+
+#chat-image-preview-container.hidden {
+  display: none !important;
+}
+
+#chat-image-preview {
+  max-height: 80px;
+  max-width: 80px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
 /* ==========================================================================
    TAB: CONFIGURAÇÕES LAYOUT & CONTROLE DE DADOS
    ========================================================================== */

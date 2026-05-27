@@ -1,5 +1,5 @@
 /**
- * CondoAdmin Pro - AI Natural Language Processing Assistant
+ * CondoAdmin Pro - Real AI Assistant (OpenAI Compatible)
  */
 
 class CondoAI {
@@ -7,146 +7,136 @@ class CondoAI {
     this.db = db;
   }
 
-  /**
-   * Process a message or command in natural language and execute db action if needed
-   * @param {string} text - User input text
-   * @returns {Promise<{message: string, actionExecuted: boolean, payload: any}>}
-   */
-  async processCommand(text) {
-    const rawText = text.toLowerCase().trim();
-    
-    // Normalize some words
-    const cleanText = rawText
-      .replace(/apto/g, "apartamento")
-      .replace(/apt/g, "apartamento")
-      .replace(/r\$/g, "")
-      .replace(/reais/g, "");
+  async processCommand(text, imageBase64 = null) {
+    const apiUrl = localStorage.getItem('llm_url');
+    const apiKey = localStorage.getItem('llm_key');
+    const model = localStorage.getItem('llm_model');
 
-    // 1. QUESTION: Current balance or reserves?
-    if (cleanText.includes("saldo") || cleanText.includes("caixa") || cleanText.includes("quanto temos") || cleanText.includes("financeiro")) {
-      const transactions = await this.db.getTransactions();
-      const reserva = this.db.getFundoReserva();
-      
-      let totalReceitas = 0;
-      let totalDespesas = 0;
-      transactions.forEach(t => {
-        if (t.tipo === "receita") totalReceitas += t.valor;
-        else totalDespesas += t.valor;
+    if (!apiUrl || !apiKey || !model) {
+      return {
+        message: "🤖 **Atenção:** A Inteligência Artificial ainda não foi configurada. Por favor, vá na aba de **Configurações**, na seção 'Inteligência Artificial (LLM)', e insira sua Base URL, Modelo e API Key.",
+        actionExecuted: false
+      };
+    }
+
+    // Gather context from DB
+    const transactions = await this.db.getTransactions();
+    const residents = await this.db.getResidents();
+    const reserva = this.db.getFundoReserva();
+    
+    let totalReceitas = 0;
+    let totalDespesas = 0;
+    transactions.forEach(t => {
+      if (t.tipo === "receita") totalReceitas += t.valor;
+      else totalDespesas += t.valor;
+    });
+    const saldo = totalReceitas - totalDespesas;
+
+    const pendentes = residents.filter(r => r.status_pagamento !== "pago");
+    const pendentesList = pendentes.length > 0 
+      ? pendentes.map(r => `Apto ${r.apto} (${r.morador}, R$ ${r.valor})`).join(", ")
+      : "Nenhum (Todos em dia)";
+
+    const todayDate = new Date().toISOString().split("T")[0];
+
+    // Build System Prompt
+    const systemPrompt = `Você é o CondoAdmin AI, o assistente inteligente de gestão do condomínio.
+    
+INFORMAÇÕES ATUAIS DO CONDOMÍNIO (HOJE: ${todayDate}):
+- Saldo em Caixa: R$ ${saldo.toFixed(2)}
+- Fundo de Reserva: R$ ${reserva.toFixed(2)}
+- Unidades Pendentes de Pagamento: ${pendentesList}
+
+INSTRUÇÕES:
+1. Responda de forma amigável, direta e profissional. Formate os valores em Reais (R$).
+2. Se o usuário estiver apenas perguntando sobre saldos, relatórios ou pendências, apenas responda em Markdown.
+3. Se o usuário pedir para REGISTRAR, ADICIONAR, LANÇAR ou PAGAR alguma despesa ou receita (ou se ele enviar uma FOTO de conta/boleto e informar que pagou ou quer lançar), você deve analisar os dados, e além do seu texto de resposta, você DEVE retornar um bloco JSON delimitado por \`\`\`json ... \`\`\` com os dados estruturados da transação.
+
+FORMATO DO JSON (apenas se for lançar algo):
+\`\`\`json
+{
+  "action": "addTransaction",
+  "payload": {
+    "data": "YYYY-MM-DD",
+    "tipo": "receita" | "despesa",
+    "categoria": "agua" | "luz" | "conserto" | "condominio" | "outro",
+    "valor": 150.00,
+    "descricao": "Breve descrição",
+    "apto_id": "101" | "102" | "201" | "202" | "comum"
+  }
+}
+\`\`\`
+Dica: se for ler uma conta/boleto na imagem anexada, extraia o valor total exato e o tipo (ex: energia = luz, sabesp/caesb = agua). Apto comum para contas gerais.
+Nunca retorne o JSON se não for para salvar/alterar o banco.`;
+
+    // Construct Messages array (OpenAI Format)
+    let userContent = [];
+    if (text) {
+      userContent.push({ type: "text", text: text });
+    } else if (imageBase64) {
+      userContent.push({ type: "text", text: "Por favor, analise a conta/documento nesta imagem." });
+    }
+    
+    if (imageBase64) {
+      userContent.push({
+        type: "image_url",
+        image_url: { url: imageBase64 }
       });
-      const saldo = totalReceitas - totalDespesas;
-      
-      return {
-        message: `🤖 **Relatório de Caixa Atual:**\n\n* **Saldo em Caixa:** R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n* **Fundo de Reserva:** R$ ${reserva.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n* **Total de Entradas:** R$ ${totalReceitas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n* **Total de Saídas:** R$ ${totalDespesas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n\nO caixa está saudável e pronto para novas operações!`,
-        actionExecuted: false
-      };
     }
 
-    // 2. QUESTION: Pending units?
-    if (cleanText.includes("pendente") || cleanText.includes("quem deve") || cleanText.includes("atrasado") || cleanText.includes("devedor")) {
-      const residents = await this.db.getResidents();
-      const pendentes = residents.filter(r => r.status_pagamento !== "pago");
-      
-      if (pendentes.length === 0) {
-        return {
-          message: "🤖 **Excelente notícia!** Todos os 4 apartamentos estão com os pagamentos de condomínio em dia para este período. Parabéns aos moradores!",
-          actionExecuted: false
-        };
-      }
-      
-      let list = pendentes.map(r => `* **Apto ${r.apto}**: ${r.morador} (R$ ${r.valor.toFixed(2)})`).join("\n");
-      return {
-        message: `🤖 **Unidades com Condomínio Pendente:**\n\n${list}\n\nVocê pode cobrá-los amigavelmente ou registrar o pagamento assim que receber.`,
-        actionExecuted: false
-      };
+    const bodyPayload = {
+      model: model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userContent }
+      ],
+      temperature: 0.1
+    };
+
+    // Make the API Request
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(bodyPayload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API HTTP Error: ${response.status}`);
     }
 
-    // 3. ACTION: Register Receipt / Condominium fee
-    // Match "101", "102", "201", "202" or similar
-    const aptoMatch = cleanText.match(/(?:apartamento|unidade)\s*(101|102|201|202)/) || cleanText.match(/\b(101|102|201|202)\b/);
-    const valueMatch = cleanText.match(/(?:valor de|de|pagou|recebi)\s*([0-9]+(?:[.,][0-9]{2})?)/) || cleanText.match(/\b([0-9]+(?:[.,][0-9]{2})?)\b/);
+    const resultData = await response.json();
+    const assistantMessage = resultData.choices[0].message.content;
+
+    // Check if there is a JSON block to execute
+    const jsonMatch = assistantMessage.match(/```json\s*([\s\S]*?)\s*```/);
     
-    const isReceita = cleanText.includes("pagou") || cleanText.includes("recebi") || cleanText.includes("pagamento") || cleanText.includes("entrada") || cleanText.includes("receita");
-    const isDespesa = cleanText.includes("despesa") || cleanText.includes("paguei") || cleanText.includes("gasto") || cleanText.includes("luz") || cleanText.includes("agua") || cleanText.includes("conserto") || cleanText.includes("saida") || cleanText.includes("manutencao");
-
-    if (isReceita && aptoMatch) {
-      const apto = aptoMatch[1];
-      const residents = await this.db.getResidents();
-      const resident = residents.find(r => r.apto === apto);
-      
-      let valor = resident ? resident.valor : 250.00;
-      if (valueMatch && parseFloat(valueMatch[1].replace(",", ".")) > 5) {
-        valor = parseFloat(valueMatch[1].replace(",", "."));
+    if (jsonMatch) {
+      try {
+        const jsonBlock = JSON.parse(jsonMatch[1]);
+        if (jsonBlock.action === "addTransaction" && jsonBlock.payload) {
+          // Execute the DB action
+          await this.db.addTransaction(jsonBlock.payload);
+          
+          // Remove the JSON block from the message shown to the user
+          const cleanMessage = assistantMessage.replace(/```json\s*[\s\S]*?\s*```/, "").trim();
+          
+          return {
+            message: cleanMessage || "🤖 Transação registrada com sucesso!",
+            actionExecuted: true,
+            payload: jsonBlock.payload
+          };
+        }
+      } catch (e) {
+        console.error("Erro ao fazer parse do JSON da IA:", e);
       }
-
-      const today = new Date().toISOString().split("T")[0];
-      const transObj = {
-        data: today,
-        tipo: "receita",
-        categoria: "condominio",
-        valor: valor,
-        descricao: `Condomínio Apto ${apto} - Pago via Comando Inteligente`,
-        apto_id: apto
-      };
-
-      await this.db.addTransaction(transObj);
-      
-      return {
-        message: `🤖 **Sucesso!** Registrei a receita do **Apto ${apto}** (${resident ? resident.morador : 'Morador'}) no valor de **R$ ${valor.toFixed(2)}**. O status do apartamento foi atualizado para **Pago**!`,
-        actionExecuted: true,
-        payload: transObj
-      };
     }
 
-    // 4. ACTION: Register Expense
-    if (isDespesa) {
-      let categoria = "outro";
-      let desc = "Despesa registrada via Comando Inteligente";
-      
-      if (cleanText.includes("agua")) {
-        categoria = "agua";
-        desc = "Conta de Água Geral";
-      } else if (cleanText.includes("luz") || cleanText.includes("energia")) {
-        categoria = "luz";
-        desc = "Conta de Luz Comum";
-      } else if (cleanText.includes("conserto") || cleanText.includes("manutencao") || cleanText.includes("reforma") || cleanText.includes("predio")) {
-        categoria = "conserto";
-        desc = "Manutenção e Conserto predial";
-      }
-
-      // Check specific details or cost matches
-      let valor = 100.00; // Default
-      if (valueMatch) {
-        valor = parseFloat(valueMatch[1].replace(",", "."));
-      }
-
-      // Detect optional specific description
-      const descMatch = text.match(/(?:para|com|referente a)\s+([^,.\n]+)/i);
-      if (descMatch) {
-        desc = descMatch[1].trim();
-      }
-
-      const today = new Date().toISOString().split("T")[0];
-      const transObj = {
-        data: today,
-        tipo: "despesa",
-        categoria: categoria,
-        valor: valor,
-        descricao: desc,
-        apto_id: aptoMatch ? aptoMatch[1] : "comum"
-      };
-
-      await this.db.addTransaction(transObj);
-
-      return {
-        message: `🤖 **Registrado com Sucesso!** Lançada despesa de **R$ ${valor.toFixed(2)}** sob a categoria **${categoria.toUpperCase()}** (${desc}). Os saldos já foram atualizados.`,
-        actionExecuted: true,
-        payload: transObj
-      };
-    }
-
-    // 5. Help Prompt fallback
+    // Normal response
     return {
-      message: `🤖 Desculpe, não entendi perfeitamente o seu comando. Como administrador, você pode:\n\n1. **Receber pagamentos:** *"Registrar pagamento do apto 102"* ou *"Recebi R$ 250 do 201"*\n2. **Registrar despesas:** *"Lançar conta de luz de R$ 145"* ou *"Registrar conserto de portão de R$ 300"*\n3. **Consultar caixa:** *"Quanto temos em caixa?"* ou *"Quem ainda está pendente?"*\n\nTente formular o comando com palavras-chave claras!`,
+      message: assistantMessage,
       actionExecuted: false
     };
   }
