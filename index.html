@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CondoAdmin Pro - Administrador de Condomínio</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="O melhor aplicativo PWA para administração e fluxo de caixa de condomínios. Completo, intuitivo e com inteligência artificial integrada.">
+  <meta name="theme-color" content="#0f172a">
+  
+  <!-- PWA Requirements -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  
+  <!-- Styling -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Turso uses native fetch – no CDN needed -->
+</head>
+<body>
+  
+  <!-- Glowing Background Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation (Desktop) / Bottom Nav (Mobile) -->
+    <nav class="nav-bar">
+      <div class="nav-logo">
+        <i class="bx bxs-building-house"></i>
+        <span>CondoAdmin <span class="accent-text">Pro</span></span>
+      </div>
+      
+      <ul class="nav-menu">
+        <li class="nav-item active" data-tab="dashboard">
+          <a href="#dashboard">
+            <i class="bx bxs-dashboard"></i>
+            <span>Painel</span>
+          </a>
+        </li>
+        <li class="nav-item" data-tab="apartamentos">
+          <a href="#apartamentos">
+            <i class="bx bxs-key"></i>
+            <span>Unidades</span>
+          </a>
+        </li>
+        <li class="nav-item" data-tab="transacoes">
+          <a href="#transacoes">
+            <i class="bx bx-transfer-alt"></i>
+            <span>Finanças</span>
+          </a>
+        </li>
+        <li class="nav-item" data-tab="ia-chat">
+          <a href="#ia-chat" class="ai-nav-glow">
+            <i class="bx bxs-bot"></i>
+            <span>Assistente IA</span>
+          </a>
+        </li>
+        <li class="nav-item" data-tab="configuracoes">
+          <a href="#configuracoes">
+            <i class="bx bxs-cog"></i>
+            <span>Ajustes</span>
+          </a>
+        </li>
+      </ul>
+      
+      <div class="nav-footer">
+        <span class="db-status-badge offline" id="db-status">
+          <span class="indicator"></span>
+          <span class="status-text">Modo Local</span>
+        </span>
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- HEADER -->
+      <header class="content-header">
+        <div class="welcome-text">
+          <h1>Olá, <span class="user-highlight">Administrador</span></h1>
+          <p id="current-date-text">Carregando informações do dia...</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="btn-quick-transaction">
+            <i class="bx bx-plus"></i> Novo Lançamento
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB: DASHBOARD -->
+      <section id="tab-dashboard" class="tab-pane active">
+        <!-- Dashboard Balance Grid -->
+        <div class="stats-grid">
+          <div class="stat-card card-total">
+            <div class="card-glow"></div>
+            <div class="stat-header">
+              <span>Saldo em Caixa</span>
+              <i class="bx bx-wallet-alt icon-total"></i>
+            </div>
+            <div class="stat-value" id="val-saldo-caixa">R$ 0,00</div>
+            <div class="stat-desc" id="val-saldo-caixa-sub">Disponível para uso imediato</div>
+          </div>
+          
+          <div class="stat-card card-reserva">
+            <div class="card-glow"></div>
+            <div class="stat-header">
+              <span>Fundo de Reserva</span>
+              <i class="bx bxs-bank icon-reserva"></i>
+            </div>
+            <div class="stat-value" id="val-fundo-reserva">R$ 0,00</div>
+            <div class="stat-desc">Destinado a emergências e melhorias</div>
+          </div>
+          
+          <div class="stat-card card-receitas">
+            <div class="card-glow"></div>
+            <div class="stat-header">
+              <span>Receitas (Mês)</span>
+              <i class="bx bx-trending-up icon-receita"></i>
+            </div>
+            <div class="stat-value text-emerald" id="val-receitas-mes">R$ 0,00</div>
+            <div class="stat-desc" id="val-receitas-count">0 condomínios pagos</div>
+          </div>
+          
+          <div class="stat-card card-despesas">
+            <div class="card-glow"></div>
+            <div class="stat-header">
+              <span>Despesas (Mês)</span>
+              <i class="bx bx-trending-down icon-despesa"></i>
+            </div>
+            <div class="stat-value text-rose" id="val-despesas-mes">R$ 0,00</div>
+            <div class="stat-desc" id="val-despesas-count">0 contas registradas</div>
+          </div>
+        </div>
+
+        <!-- Dashboard Charts and Actions Grid -->
+        <div class="dashboard-details-grid">
+          <!-- Flow Chart Container -->
+          <div class="glass-container chart-box">
+            <div class="box-header">
+              <h2>Fluxo de Caixa Mensal</h2>
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-dot bg-emerald"></span> Receitas</span>
+                <span class="legend-item"><span class="legend-dot bg-rose"></span> Despesas</span>
+              </div>
+            </div>
+            <div class="chart-wrapper">
+              <!-- Inline dynamic SVG chart wrapper -->
+              <svg id="cashflow-chart" class="svg-chart" viewBox="0 0 600 240"></svg>
+            </div>
+          </div>
+
+          <!-- Pending Alerts and Tasks -->
+          <div class="glass-container alerts-box">
+            <div class="box-header">
+              <h2>Alertas & Ações Rápidas</h2>
+            </div>
+            <div class="alerts-list" id="dashboard-alerts">
+              <!-- Alerts generated by status -->
+              <div class="alert-empty-state">
+                <i class="bx bx-badge-check"></i>
+                <p>Tudo sob controle! Sem pendências urgentes.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="glass-container mt-2">
+          <div class="box-header">
+            <h2>Últimas Atividades</h2>
+            <button class="btn btn-secondary btn-sm" id="btn-see-all-transactions">Ver Todas</button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Tipo</th>
+                  <th>Categoria</th>
+                  <th>Descrição</th>
+                  <th>Vínculo</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-recent-transactions">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: APARTAMENTOS -->
+      <section id="tab-apartamentos" class="tab-pane">
+        <div class="section-desc-wrapper">
+          <p class="section-desc">Gerencie os moradores, contatos e visualize o status financeiro de cada unidade do condomínio.</p>
+        </div>
+
+        <!-- Grid of 4 units + Common Area -->
+        <div class="apartments-grid">
+          <!-- Apto 101 -->
+          <div class="apartment-card" data-apto="101">
+            <div class="card-glow"></div>
+            <div class="apto-badge">Apto 101</div>
+            <div class="apto-info">
+              <h3 class="morador-nome" id="morador-101">Carregando...</h3>
+              <p class="apto-sub">1º Andar - Bloco A</p>
+            </div>
+            <div class="apto-status" id="status-pag-101">
+              <span class="badge badge-success"><i class="bx bx-check-circle"></i> Condomínio Pago</span>
+            </div>
+          </div>
+          
+          <!-- Apto 102 -->
+          <div class="apartment-card" data-apto="102">
+            <div class="card-glow"></div>
+            <div class="apto-badge">Apto 102</div>
+            <div class="apto-info">
+              <h3 class="morador-nome" id="morador-102">Carregando...</h3>
+              <p class="apto-sub">1º Andar - Bloco B</p>
+            </div>
+            <div class="apto-status" id="status-pag-102">
+              <span class="badge badge-warning"><i class="bx bx-time-five"></i> Pendente</span>
+            </div>
+          </div>
+          
+          <!-- Apto 201 -->
+          <div class="apartment-card" data-apto="201">
+            <div class="card-glow"></div>
+            <div class="apto-badge">Apto 201</div>
+            <div class="apto-info">
+              <h3 class="morador-nome" id="morador-201">Carregando...</h3>
+              <p class="apto-sub">2º Andar - Bloco A</p>
+            </div>
+            <div class="apto-status" id="status-pag-201">
+              <span class="badge badge-success"><i class="bx bx-check-circle"></i> Condomínio Pago</span>
+            </div>
+          </div>
+          
+          <!-- Apto 202 -->
+          <div class="apartment-card" data-apto="202">
+            <div class="card-glow"></div>
+            <div class="apto-badge">Apto 202</div>
+            <div class="apto-info">
+              <h3 class="morador-nome" id="morador-202">Carregando...</h3>
+              <p class="apto-sub">2º Andar - Bloco B</p>
+            </div>
+            <div class="apto-status" id="status-pag-202">
+              <span class="badge badge-success"><i class="bx bx-check-circle"></i> Condomínio Pago</span>
+            </div>
+          </div>
+          
+          <!-- Área Comum -->
+          <div class="apartment-card area-comum" data-apto="comum">
+            <div class="card-glow"></div>
+            <div class="apto-badge font-secondary">Área Comum</div>
+            <div class="apto-info">
+              <h3>Áreas Compartilhadas</h3>
+              <p class="apto-sub">Garagem, Hall e Telhado</p>
+            </div>
+            <div class="apto-status" id="status-pag-comum">
+              <span class="badge badge-info"><i class="bx bx-wrench"></i> 0 Manutenções Ativas</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Apartment details dynamic container -->
+        <div id="apartment-details-section" class="glass-container mt-3 hidden">
+          <div class="box-header border-bottom">
+            <div class="header-unit-info">
+              <h2 id="detail-unit-title">Unidade 101</h2>
+              <span class="badge" id="detail-unit-status">Pendente</span>
+            </div>
+            <button class="btn-close" id="btn-close-unit-detail"><i class="bx bx-x"></i></button>
+          </div>
+          
+          <div class="unit-detail-grid">
+            <div class="unit-form-side">
+              <h3>Dados do Residente</h3>
+              <form id="form-resident-edit" class="styled-form">
+                <input type="hidden" id="edit-resident-apto">
+                <div class="form-group">
+                  <label for="edit-resident-name">Nome do Morador</label>
+                  <input type="text" id="edit-resident-name" required placeholder="Ex: Maria Silva">
+                </div>
+                <div class="form-group">
+                  <label for="edit-resident-phone">Contato / Telefone</label>
+                  <input type="text" id="edit-resident-phone" placeholder="Ex: (11) 99999-9999">
+                </div>
+                <div class="form-group">
+                  <label for="edit-resident-value">Valor Mensal do Condomínio (R$)</label>
+                  <input type="number" id="edit-resident-value" step="0.01" value="250.00">
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Salvar Informações</button>
+              </form>
+            </div>
+            
+            <div class="unit-payments-side">
+              <h3>Histórico Financeiro da Unidade</h3>
+              <div class="table-responsive max-h-300">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Tipo</th>
+                      <th>Descrição</th>
+                      <th>Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody id="unit-recent-transactions-list">
+                    <!-- Dynamic -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: TRANSAÇÕES / FINANÇAS -->
+      <section id="tab-transacoes" class="tab-pane">
+        <div class="finances-layout">
+          
+          <!-- Column 1: Financial Form -->
+          <div class="glass-container">
+            <div class="box-header">
+              <h2>Novo Lançamento Financeiro</h2>
+            </div>
+            <form id="transaction-form" class="styled-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Tipo de Lançamento</label>
+                  <div class="toggle-switch">
+                    <input type="radio" id="type-receita" name="trans-type" value="receita" checked>
+                    <label for="type-receita" class="toggle-btn bg-success-glow">Receita (Entrada)</label>
+                    
+                    <input type="radio" id="type-despesa" name="trans-type" value="despesa">
+                    <label for="type-despesa" class="toggle-btn bg-danger-glow">Despesa (Saída)</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-6">
+                  <label for="trans-value">Valor (R$)</label>
+                  <input type="number" id="trans-value" step="0.01" required placeholder="0,00">
+                </div>
+                <div class="form-group col-6">
+                  <label for="trans-date">Data</label>
+                  <input type="date" id="trans-date" required>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-6">
+                  <label for="trans-category">Categoria</label>
+                  <select id="trans-category" required>
+                    <option value="condominio">Taxa de Condomínio</option>
+                    <option value="agua">Conta de Água</option>
+                    <option value="luz">Conta de Luz</option>
+                    <option value="conserto">Conserto / Manutenção</option>
+                    <option value="area_comum">Taxa de Área Comum</option>
+                    <option value="reserva">Fundo de Reserva</option>
+                    <option value="outro">Outro / Diversos</option>
+                  </select>
+                </div>
+                <div class="form-group col-6">
+                  <label for="trans-unit">Vincular Unidade</label>
+                  <select id="trans-unit">
+                    <option value="">Nenhuma (Geral)</option>
+                    <option value="101">Apto 101</option>
+                    <option value="102">Apto 102</option>
+                    <option value="201">Apto 201</option>
+                    <option value="202">Apto 202</option>
+                    <option value="comum">Área Comum</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="trans-desc">Descrição / Detalhes</label>
+                <input type="text" id="trans-desc" required placeholder="Ex: Pagamento do condomínio de Maio">
+              </div>
+
+              <button type="submit" class="btn btn-primary w-full mt-1">Registrar Lançamento</button>
+            </form>
+          </div>
+
+          <!-- Column 2: History & Filters -->
+          <div class="glass-container">
+            <div class="box-header flex-column md-flex-row">
+              <h2>Histórico Completo</h2>
+              <div class="filters-row mt-1">
+                <select id="filter-type" class="form-control-sm">
+                  <option value="todos">Todos Tipos</option>
+                  <option value="receita">Receitas</option>
+                  <option value="despesa">Despesas</option>
+                </select>
+                <select id="filter-category" class="form-control-sm">
+                  <option value="todas">Todas Categorias</option>
+                  <option value="condominio">Condomínio</option>
+                  <option value="agua">Água</option>
+                  <option value="luz">Luz</option>
+                  <option value="conserto">Conserto</option>
+                  <option value="outro">Outros</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="table-responsive max-h-400 mt-1">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Categoria</th>
+                    <th>Descrição</th>
+                    <th>Vínculo</th>
+                    <th>Valor</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="finances-transactions-list">
+                  <!-- Dynamic content -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: CHAT / INTELIGÊNCIA ARTIFICIAL -->
+      <section id="tab-ia-chat" class="tab-pane">
+        <div class="ai-chat-layout">
+          <!-- Main Chat Panel -->
+          <div class="glass-container chat-container-box">
+            <div class="box-header border-bottom">
+              <div class="ai-status">
+                <div class="ai-avatar">
+                  <i class="bx bxs-bot"></i>
+                </div>
+                <div class="ai-status-info">
+                  <h2>Assistente Inteligente</h2>
+                  <p><span class="online-indicator"></span> Ativo para comandos por voz e texto</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Messages Log -->
+            <div class="chat-messages" id="chat-messages-container">
+              <div class="chat-msg system">
+                <div class="msg-avatar"><i class="bx bxs-bot"></i></div>
+                <div class="msg-bubble">
+                  Olá! Sou o seu assistente de administração condominial. Você pode me dar comandos em linguagem natural ou me fazer perguntas sobre a saúde financeira do prédio.
+                  <br><br>
+                  <strong>Experimente digitar algo como:</strong>
+                  <ul class="quick-examples-list">
+                    <li>"O morador do 102 pagou o condominio hoje"</li>
+                    <li>"Registrar conta de agua de 150 reais paga ontem"</li>
+                    <li>"Como esta o saldo do caixa atual?"</li>
+                    <li>"Lançar conserto da garagem no valor de R$ 350"</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preconfigured Chips -->
+            <div class="quick-chips-wrapper">
+              <button class="chip" data-cmd="Como está o saldo do caixa atual?">
+                <i class="bx bx-line-chart"></i> Consultar Saldo
+              </button>
+              <button class="chip" data-cmd="Apto 101 pagou o condomínio hoje">
+                <i class="bx bx-check-double"></i> Receber Apto 101
+              </button>
+              <button class="chip" data-cmd="Lançar conta de luz de 180 reais">
+                <i class="bx bx-bulb"></i> Lançar Conta Luz
+              </button>
+              <button class="chip" data-cmd="Relatório financeiro do mês">
+                <i class="bx bx-file"></i> Relatório do Mês
+              </button>
+            </div>
+
+            <!-- Input Bar -->
+            <form id="chat-input-form" class="chat-input-bar">
+              <input type="text" id="chat-user-input" placeholder="Escreva seu comando em linguagem natural aqui..." autocomplete="off">
+              <button type="submit" class="btn btn-primary btn-chat-send">
+                <i class="bx bxs-send"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: CONFIGURAÇÕES -->
+      <section id="tab-configuracoes" class="tab-pane">
+        <div class="config-layout">
+          
+          <!-- Cloud Turso Settings -->
+          <div class="glass-container">
+            <div class="box-header">
+              <h2><i class='bx bx-data'></i> Conexão com o Turso (Nuvem)</h2>
+            </div>
+            <p class="config-desc">Conecte o CondoAdmin Pro ao seu banco de dados Turso (SQLite na nuvem) para manter seus dados sincronizados e salvos com segurança em qualquer dispositivo.</p>
+            
+            <form id="turso-config-form" class="styled-form mt-1">
+              <div class="form-group">
+                <label for="turso-url">Turso Database URL</label>
+                <input type="url" id="turso-url" placeholder="https://meudb-usuario.turso.io">
+              </div>
+              <div class="form-group">
+                <label for="turso-token">Turso Auth Token</label>
+                <input type="password" id="turso-token" placeholder="eyJhbGciOiJFZER...">
+              </div>
+              
+              <div class="btn-group-row">
+                <button type="submit" class="btn btn-primary" id="btn-save-turso"><i class='bx bx-link'></i> Salvar & Conectar</button>
+                <button type="button" class="btn btn-secondary" id="btn-disconnect-turso"><i class='bx bx-unlink'></i> Desconectar</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- App Data Control -->
+          <div class="glass-container">
+            <div class="box-header">
+              <h2>Controle de Dados & Reset</h2>
+            </div>
+            <p class="config-desc">Ferramentas para manutenção manual e migração rápida do seu caixa de administração.</p>
+            
+            <div class="data-actions-grid mt-2">
+              <button class="btn btn-secondary" id="btn-export-data">
+                <i class="bx bx-download"></i> Exportar Tudo (JSON)
+              </button>
+              
+              <label class="btn btn-secondary cursor-pointer" for="btn-import-data">
+                <i class="bx bx-upload"></i> Importar Backup
+                <input type="file" id="btn-import-data" accept=".json" class="hidden">
+              </label>
+
+              <button class="btn btn-danger" id="btn-reset-data">
+                <i class="bx bx-trash"></i> Restaurar Banco Padrão
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+  <!-- POPUP MODAL: QUICK TRANSACTION -->
+  <div class="modal-overlay hidden" id="modal-quick-transaction">
+    <div class="glass-container modal-box">
+      <div class="box-header border-bottom">
+        <h2>Novo Lançamento Rápido</h2>
+        <button class="btn-close" id="btn-close-quick-modal"><i class="bx bx-x"></i></button>
+      </div>
+      <div class="modal-body mt-1">
+        <!-- Render copy of form or use direct js binding -->
+        <div id="modal-form-placeholder"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript Bundle -->
+  <script src="db.js"></script>
+  <script src="ai.js"></script>
+  <script src="app.js"></script>
+
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker registrado com sucesso.', reg.scope))
+          .catch(err => console.warn('SW falhou:', err));
+      });
+    }
+  </script>
+</body>
+</html>
