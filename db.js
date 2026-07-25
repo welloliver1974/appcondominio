@@ -188,7 +188,7 @@ class CondoDatabase {
 
   initializeLocalDB() {
     // Storage version check — bump to force clear stale data
-    const STORAGE_VERSION = "4";
+    const STORAGE_VERSION = "5";
     const storedVersion = localStorage.getItem("CONDO_DB_VERSION");
     if (storedVersion !== STORAGE_VERSION) {
       // Clear all old-format data so defaults take effect
@@ -202,6 +202,8 @@ class CondoDatabase {
       }
       keysToRemove.forEach(k => localStorage.removeItem(k));
       localStorage.setItem("CONDO_DB_VERSION", STORAGE_VERSION);
+      // Flag that Turso also needs cleanup on next connect
+      localStorage.setItem("CONDO_TURSO_NEEDS_CLEANUP", "1");
     }
 
     if (!localStorage.getItem("CONDO_RESIDENTS")) {
@@ -472,7 +474,8 @@ class CondoDatabase {
   async ensureTursoTables() {
     if (!this.isTursoConnected) return;
     try {
-      await this.tursoClient.execute([
+      const cleanup = localStorage.getItem("CONDO_TURSO_NEEDS_CLEANUP") === "1";
+      const statements = [
         {
           sql: `CREATE TABLE IF NOT EXISTS apartamentos (
             apto TEXT PRIMARY KEY,
@@ -495,7 +498,16 @@ class CondoDatabase {
           )`,
           args: []
         }
-      ]);
+      ];
+
+      if (cleanup) {
+        statements.push({ sql: "DELETE FROM apartamentos", args: [] });
+        statements.push({ sql: "DELETE FROM transacoes", args: [] });
+        localStorage.removeItem("CONDO_TURSO_NEEDS_CLEANUP");
+        console.log("Dados antigos do Turso limpos com sucesso!");
+      }
+
+      await this.tursoClient.execute(statements);
       console.log("Tabelas do Turso verificadas/criadas com sucesso!");
     } catch (e) {
       console.error("Erro ao criar tabelas no Turso:", e);
