@@ -164,7 +164,8 @@ class CondoDatabase {
       localStorage.setItem("CONDO_TURSO_URL", url);
       localStorage.setItem("CONDO_TURSO_TOKEN", token);
 
-      // Auto-sync local data to Turso
+      // Ensure tables exist, then sync local data
+      await this.ensureTursoTables();
       await this.syncLocalToCloud();
 
       return true;
@@ -444,6 +445,41 @@ class CondoDatabase {
 
     this.setLastGeneratedMonth(monthKey);
     return createdCount;
+  }
+
+  // ------- Turso Table Initialization -------
+
+  async ensureTursoTables() {
+    if (!this.isTursoConnected) return;
+    try {
+      await this.tursoClient.execute([
+        {
+          sql: `CREATE TABLE IF NOT EXISTS apartamentos (
+            apto TEXT PRIMARY KEY,
+            morador TEXT DEFAULT '',
+            telefone TEXT DEFAULT '',
+            valor REAL DEFAULT 0,
+            status_pagamento TEXT DEFAULT 'pendente'
+          )`,
+          args: []
+        },
+        {
+          sql: `CREATE TABLE IF NOT EXISTS transacoes (
+            id TEXT PRIMARY KEY,
+            data TEXT NOT NULL,
+            tipo TEXT NOT NULL,
+            categoria TEXT NOT NULL,
+            valor REAL NOT NULL,
+            descricao TEXT DEFAULT '',
+            apto_id TEXT DEFAULT ''
+          )`,
+          args: []
+        }
+      ]);
+      console.log("Tabelas do Turso verificadas/criadas com sucesso!");
+    } catch (e) {
+      console.error("Erro ao criar tabelas no Turso:", e);
+    }
   }
 
   // ------- Sync local → Turso -------
