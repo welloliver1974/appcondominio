@@ -10,20 +10,13 @@
  */
 
 const DEFAULT_RESIDENTS = [
-  { apto: "101", morador: "João Silva", telefone: "(11) 98888-7711", valor: 250.00, status_pagamento: "pago" },
-  { apto: "102", morador: "Maria Souza", telefone: "(11) 98888-7722", valor: 250.00, status_pagamento: "pendente" },
-  { apto: "201", morador: "Carlos Oliveira", telefone: "(11) 98888-7733", valor: 250.00, status_pagamento: "pago" },
-  { apto: "202", morador: "Ana Pereira", telefone: "(11) 98888-7744", valor: 250.00, status_pagamento: "pago" }
+  { apto: "101", morador: "", telefone: "", valor: 250.00, status_pagamento: "pendente" },
+  { apto: "102", morador: "", telefone: "", valor: 250.00, status_pagamento: "pendente" },
+  { apto: "201", morador: "", telefone: "", valor: 250.00, status_pagamento: "pendente" },
+  { apto: "202", morador: "", telefone: "", valor: 250.00, status_pagamento: "pendente" }
 ];
 
-const DEFAULT_TRANSACTIONS = [
-  { id: "t-1", data: "2026-05-10", tipo: "receita", categoria: "condominio", valor: 250.00, descricao: "Condomínio Apto 101 - Referente a Maio", apto_id: "101" },
-  { id: "t-2", data: "2026-05-12", tipo: "receita", categoria: "condominio", valor: 250.00, descricao: "Condomínio Apto 201 - Referente a Maio", apto_id: "201" },
-  { id: "t-3", data: "2026-05-15", tipo: "receita", categoria: "condominio", valor: 250.00, descricao: "Condomínio Apto 202 - Referente a Maio", apto_id: "202" },
-  { id: "t-4", data: "2026-05-05", tipo: "despesa", categoria: "agua", valor: 140.00, descricao: "Conta de Água Geral do Prédio", apto_id: "comum" },
-  { id: "t-5", data: "2026-05-08", tipo: "despesa", categoria: "luz", valor: 185.50, descricao: "Conta de Luz Área Comum e Hall", apto_id: "comum" },
-  { id: "t-6", data: "2026-05-18", tipo: "despesa", categoria: "conserto", valor: 320.00, descricao: "Manutenção do Portão Eletrônico", apto_id: "comum" }
-];
+const DEFAULT_TRANSACTIONS = [];
 
 // ===========================================================================
 // TursoClient — lightweight wrapper around the Turso HTTP API
@@ -200,7 +193,7 @@ class CondoDatabase {
       localStorage.setItem("CONDO_TRANSACTIONS", JSON.stringify(DEFAULT_TRANSACTIONS));
     }
     if (!localStorage.getItem("CONDO_FUNDO_RESERVA")) {
-      localStorage.setItem("CONDO_FUNDO_RESERVA", "500.00");
+      localStorage.setItem("CONDO_FUNDO_RESERVA", "0");
     }
   }
 
