@@ -766,22 +766,14 @@ body {
 
 .col-3 {
   width: 25%;
-  flex: 0 0 calc(25% - 0.75rem);
-  min-width: 0;
 }
 
 @media (max-width: 768px) {
-  .col-3 {
-    width: 50%;
-    flex: 0 0 calc(50% - 0.5rem);
-  }
+  .col-3 { width: 50%; }
 }
 
 @media (max-width: 480px) {
-  .col-3 {
-    width: 100%;
-    flex: 0 0 100%;
-  }
+  .col-3 { width: 100%; }
 }
 
 label {
@@ -1544,27 +1536,12 @@ input:focus, select:focus {
   background: rgba(255,255,255,0.06);
 }
 
-.recurring-bill-row .form-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
+/* Force inputs to shrink instead of overflowing the row */
+.recurring-bill-row .form-group input,
+.recurring-bill-row .form-group select {
+  min-width: 0;
+  width: 100%;
 }
-
-@media (max-width: 768px) {
-  .recurring-bill-row .form-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 480px) {
-  .recurring-bill-row .form-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ==========================================================================
-   STREAMING CURSOR
-   ========================================================================== */
 .stream-cursor {
   animation: cursor-blink 0.8s step-end infinite;
   font-weight: 300;
