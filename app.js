@@ -1299,11 +1299,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // Pending residents alert
-    const pendentes = residents.filter(r => r.status_pagamento !== "pago");
+    // Pending residents alert (only configured units with names)
+    const pendentes = residents.filter(r => r.status_pagamento !== "pago" && r.morador);
     if (pendentes.length > 0) {
       new Notification("🏠 Condomínio Pendente", {
-        body: `${pendentes.length} unidade(s) com pagamento pendente: ${pendentes.map(r => `Apto ${r.apto}`).join(", ")}`,
+        body: `${pendentes.length} unidade(s) com pagamento pendente: ${pendentes.map(r => `Apto ${r.apto} (${r.morador})`).join(", ")}`,
         icon: "./icons/icon-192.png"
       });
       notifiedThisSession = true;
