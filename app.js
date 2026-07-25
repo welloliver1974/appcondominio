@@ -949,6 +949,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       try {
         await window.condoDb.connectTurso(url, token);
+        updateDbStatusBadge();
         showToast('success', 'Turso Conectado!', 'Seus dados foram sincronizados com o banco na nuvem.');
         updateDashboardData();
       } catch (err) {
@@ -963,6 +964,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (elements.btnDisconnectTurso) {
     elements.btnDisconnectTurso.addEventListener("click", () => {
       window.condoDb.disconnectTurso();
+      updateDbStatusBadge();
       elements.tursoUrl.value = "";
       elements.tursoToken.value = "";
       showToast('info', 'Desconectado', 'Turso desconectado. O app voltou ao modo offline/local.');
