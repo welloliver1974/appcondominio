@@ -213,6 +213,62 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.valDespesasMes.textContent = `R$ ${monthDespesasVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
     elements.valDespesasCount.textContent = `${despesasCount} saída(s) este mês`;
 
+    // Monthly Summary (Resumo do Mês)
+    const summaryEl = (id) => document.getElementById(id);
+    const mesSaldo = monthReceitasVal - monthDespesasVal;
+    const totalCondominios = residents.length;
+    const pagos = residents.filter(r => r.status_pagamento === "pago").length;
+
+    if (summaryEl("summary-receitas")) {
+      summaryEl("summary-receitas").textContent = `R$ ${monthReceitasVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    }
+    if (summaryEl("summary-despesas")) {
+      summaryEl("summary-despesas").textContent = `R$ ${monthDespesasVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    }
+    if (summaryEl("summary-saldo-mes")) {
+      const saldoEl = summaryEl("summary-saldo-mes");
+      saldoEl.textContent = `R$ ${mesSaldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      saldoEl.style.color = mesSaldo >= 0 ? "var(--emerald)" : "var(--rose)";
+    }
+    if (summaryEl("summary-condominios")) {
+      summaryEl("summary-condominios").textContent = `${pagos}/${totalCondominios} pagos`;
+    }
+    if (summaryEl("summary-reserva")) {
+      summaryEl("summary-reserva").textContent = `R$ ${reserva.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    }
+
+    // Compare with previous month
+    if (summaryEl("summary-vs-mes-passado")) {
+      const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      let prevReceitas = 0, prevDespesas = 0;
+
+      transactions.forEach(t => {
+        const tDate = new Date(t.data);
+        if (tDate.getMonth() === prevMonth && tDate.getFullYear() === prevYear) {
+          if (t.tipo === "receita") prevReceitas += t.valor;
+          else prevDespesas += t.valor;
+        }
+      });
+
+      const prevSaldo = prevReceitas - prevDespesas;
+      const diff = mesSaldo - prevSaldo;
+      const vsEl = summaryEl("summary-vs-mes-passado");
+
+      if (prevSaldo === 0 && mesSaldo === 0) {
+        vsEl.textContent = "—";
+      } else if (prevSaldo === 0) {
+        vsEl.textContent = "↗ Novo";
+        vsEl.style.color = "var(--emerald)";
+      } else {
+        const pct = ((diff / Math.abs(prevSaldo)) * 100).toFixed(1);
+        const arrow = diff >= 0 ? "↗" : "↘";
+        const color = diff >= 0 ? "var(--emerald)" : "var(--rose)";
+        vsEl.textContent = `${arrow} ${pct}%`;
+        vsEl.style.color = color;
+      }
+    }
+
     // Alert systems
     generateDashboardAlerts(residents, saldoCaixa);
 
@@ -221,6 +277,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Render Charts
     renderCashFlowChart(transactions);
+
+    // Check monthly bills status
+    checkMonthlyBillsAlert();
   }
 
   function generateDashboardAlerts(residents, saldoCaixa) {
@@ -314,7 +373,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       tr.innerHTML = `
         <td>${formatDateBR(t.data)}</td>
         <td><span class="badge ${badgeClass}">${t.tipo.toUpperCase()}</span></td>
-        <td>${t.categoria.toUpperCase()}</td>
+        <td><span class="cat-chip cat-${t.categoria}">${t.categoria.replace("_", " ")}</span></td>
         <td>${t.descricao}</td>
         <td>${t.apto_id ? `Apto ${t.apto_id}` : "Geral"}</td>
         <td class="${valueClass} font-bold">${sign} R$ ${t.valor.toFixed(2)}</td>
@@ -835,6 +894,166 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       showToast('success', 'IA Configurada', 'As configurações do provedor LLM foram salvas.');
     });
+  }
+
+  // ==========================================================================
+  // RECURRING BILLS (Contas Fixas)
+  // ==========================================================================
+
+  // Render recurring bills list in config
+  function renderRecurringBills() {
+    const bills = window.condoDb.getRecurringBills();
+    const container = document.getElementById("recurring-bills-list");
+    if (!container) return;
+
+    container.innerHTML = bills.map((bill, index) => `
+      <div class="recurring-bill-row" data-index="${index}">
+        <div class="form-row">
+          <div class="form-group col-3">
+            <label>Categoria</label>
+            <select class="bill-category form-control-sm" data-index="${index}">
+              <option value="agua" ${bill.categoria === 'agua' ? 'selected' : ''}>Água</option>
+              <option value="luz" ${bill.categoria === 'luz' ? 'selected' : ''}>Luz</option>
+              <option value="limpeza" ${bill.categoria === 'limpeza' ? 'selected' : ''}>Limpeza</option>
+              <option value="conserto" ${bill.categoria === 'conserto' ? 'selected' : ''}>Conserto</option>
+              <option value="outro" ${bill.categoria === 'outro' ? 'selected' : ''}>Outro</option>
+            </select>
+          </div>
+          <div class="form-group col-3">
+            <label>Descrição</label>
+            <input type="text" class="bill-desc form-control-sm" value="${bill.descricao}" data-index="${index}" placeholder="Ex: Conta de Água">
+          </div>
+          <div class="form-group col-3">
+            <label>Valor Fixo (R$)</label>
+            <input type="number" step="0.01" class="bill-value form-control-sm" value="${bill.valor || ''}" data-index="${index}" placeholder="Variável">
+          </div>
+          <div class="form-group col-3">
+            <label>Dia Vencimento</label>
+            <input type="number" min="1" max="31" class="bill-day form-control-sm" value="${bill.dia_vencimento}" data-index="${index}">
+          </div>
+        </div>
+      </div>
+    `).join("");
+
+    container.querySelectorAll("input, select").forEach(el => {
+      el.addEventListener("change", saveRecurringBills);
+    });
+  }
+
+  function saveRecurringBills() {
+    const container = document.getElementById("recurring-bills-list");
+    if (!container) return;
+
+    const rows = container.querySelectorAll(".recurring-bill-row");
+    const bills = Array.from(rows).map(row => {
+      const index = row.getAttribute("data-index");
+      return {
+        id: `r${index}`,
+        categoria: row.querySelector(".bill-category").value,
+        descricao: row.querySelector(".bill-desc").value,
+        valor: row.querySelector(".bill-value").value ? parseFloat(row.querySelector(".bill-value").value) : null,
+        dia_vencimento: parseInt(row.querySelector(".bill-day").value) || 10
+      };
+    });
+
+    window.condoDb.saveRecurringBills(bills);
+  }
+
+  // Check monthly bills status and update UI
+  function updateMonthlyBillsUI() {
+    const statusEl = document.getElementById("monthly-bills-status");
+    const btnGen = document.getElementById("btn-generate-monthly-bills");
+    if (!statusEl || !btnGen) return;
+
+    const today = new Date();
+    const monthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+    const lastGen = window.condoDb.getLastGeneratedMonth();
+
+    if (lastGen === monthKey) {
+      const monthName = today.toLocaleDateString('pt-BR', { month: 'long' });
+      statusEl.textContent = `✅ Contas de ${monthName} já geradas`;
+      statusEl.className = "badge badge-success";
+      statusEl.style.display = "inline-flex";
+      btnGen.disabled = true;
+      btnGen.innerHTML = '<i class="bx bx-check"></i> Contas Geradas';
+    } else {
+      statusEl.style.display = "none";
+      btnGen.disabled = false;
+      btnGen.innerHTML = '<i class="bx bx-calendar-check"></i> Gerar Contas deste Mês';
+    }
+  }
+
+  // Render bills list when config tab opens
+  document.querySelector('.nav-item[data-tab="configuracoes"]')?.addEventListener("click", () => {
+    setTimeout(renderRecurringBills, 100);
+    setTimeout(updateMonthlyBillsUI, 150);
+  });
+
+  // Generate monthly bills button
+  const btnGenBills = document.getElementById("btn-generate-monthly-bills");
+  if (btnGenBills) {
+    btnGenBills.addEventListener("click", async () => {
+      btnGenBills.disabled = true;
+      btnGenBills.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Gerando...';
+
+      try {
+        const count = await window.condoDb.generateMonthlyBills();
+        if (count > 0) {
+          showToast('success', 'Contas Geradas!', `${count} conta(s) fixa(s) foram criadas para este mês.`);
+          updateDashboardData();
+        } else {
+          showToast('info', 'Mês já Gerado', 'As contas deste mês já foram geradas anteriormente.');
+        }
+        updateMonthlyBillsUI();
+      } catch (err) {
+        showToast('error', 'Erro', 'Não foi possível gerar as contas do mês.');
+        console.error(err);
+      } finally {
+        btnGenBills.disabled = false;
+        btnGenBills.innerHTML = '<i class="bx bx-calendar-check"></i> Gerar Contas deste Mês';
+      }
+    });
+  }
+
+  // Dashboard alert for ungenerated monthly bills
+  async function checkMonthlyBillsAlert() {
+    const today = new Date();
+    const monthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+    const lastGen = window.condoDb.getLastGeneratedMonth();
+
+    if (lastGen !== monthKey) {
+      // Check if there are already manually created bills this month
+      const transactions = await window.condoDb.getTransactions();
+      const monthTrans = transactions.filter(t => t.data.startsWith(monthKey));
+      const hasAgua = monthTrans.some(t => t.categoria === "agua");
+      const hasLuz = monthTrans.some(t => t.categoria === "luz");
+      const hasLimpeza = monthTrans.some(t => t.categoria === "limpeza");
+
+      if (!hasAgua || !hasLuz || !hasLimpeza) {
+        const alertsContainer = document.getElementById("dashboard-alerts");
+        if (!alertsContainer) return;
+
+        const alertItem = document.createElement("div");
+        alertItem.className = "alert-item";
+        alertItem.innerHTML = `
+          <i class="bx bx-calendar-exclamation alert-icon warning" style="color: var(--cyan); background: var(--cyan-glow)"></i>
+          <div class="alert-content">
+            <h4>Contas do Mês</h4>
+            <p>As contas fixas de ${today.toLocaleDateString('pt-BR', { month: 'long' })} ainda não foram geradas.</p>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-gen-bills-from-dash">
+            <i class="bx bx-calendar-check"></i> Gerar Agora
+          </button>
+        `;
+        alertsContainer.prepend(alertItem);
+
+        document.getElementById("btn-gen-bills-from-dash")?.addEventListener("click", async () => {
+          await window.condoDb.generateMonthlyBills();
+          updateDashboardData();
+          showToast('success', 'Contas Geradas!', 'Contas fixas do mês registradas com sucesso.');
+        });
+      }
+    }
   }
 
   // Backup Export

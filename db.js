@@ -377,6 +377,82 @@ class CondoDatabase {
     this.initializeLocalDB();
   }
 
+  // ------- Recurring Bills (Contas Fixas) -------
+
+  getRecurringBills() {
+    const stored = localStorage.getItem("CONDO_RECURRING_BILLS");
+    if (stored) return JSON.parse(stored);
+    // Default bills if none saved
+    const defaults = [
+      { id: "r1", categoria: "agua", descricao: "Conta de Água", valor: null, dia_vencimento: 10 },
+      { id: "r2", categoria: "luz", descricao: "Conta de Luz", valor: null, dia_vencimento: 15 },
+      { id: "r3", categoria: "limpeza", descricao: "Serviço de Limpeza", valor: 150.00, dia_vencimento: 5 }
+    ];
+    localStorage.setItem("CONDO_RECURRING_BILLS", JSON.stringify(defaults));
+    return defaults;
+  }
+
+  saveRecurringBills(bills) {
+    localStorage.setItem("CONDO_RECURRING_BILLS", JSON.stringify(bills));
+  }
+
+  getLastGeneratedMonth() {
+    return localStorage.getItem("CONDO_LAST_BILL_MONTH") || "";
+  }
+
+  setLastGeneratedMonth(monthKey) {
+    localStorage.setItem("CONDO_LAST_BILL_MONTH", monthKey);
+  }
+
+  /**
+   * Generate transactions for the current month based on recurring bills.
+   * Only runs once per month (checks CONDO_LAST_BILL_MONTH).
+   * Returns the number of transactions created, or 0 if already generated.
+   */
+  async generateMonthlyBills() {
+    const today = new Date();
+    const monthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+
+    if (this.getLastGeneratedMonth() === monthKey) {
+      return 0; // Already generated this month
+    }
+
+    const bills = this.getRecurringBills();
+    const existingTransactions = JSON.parse(localStorage.getItem("CONDO_TRANSACTIONS")) || [];
+    let createdCount = 0;
+
+    for (const bill of bills) {
+      if (!bill.valor && bill.valor !== 0) continue; // skip bills with no fixed value (user must enter manually)
+
+      // Check if this specific bill category already has a transaction this month for the comune area
+      const alreadyExists = existingTransactions.some(t => {
+        const tMonth = t.data.substring(0, 7);
+        return tMonth === monthKey && t.categoria === bill.categoria && t.apto_id === "comum";
+      });
+      if (alreadyExists) continue;
+
+      const newTrans = {
+        id: `t-bill-${Date.now()}-${createdCount}`,
+        data: `${monthKey}-${String(bill.dia_vencimento).padStart(2, "0")}`,
+        tipo: "despesa",
+        categoria: bill.categoria,
+        valor: bill.valor,
+        descricao: bill.descricao + (bill.valor ? "" : " (valor variável)"),
+        apto_id: "comum"
+      };
+
+      existingTransactions.push(newTrans);
+      createdCount++;
+    }
+
+    if (createdCount > 0) {
+      localStorage.setItem("CONDO_TRANSACTIONS", JSON.stringify(existingTransactions));
+    }
+
+    this.setLastGeneratedMonth(monthKey);
+    return createdCount;
+  }
+
   // ------- Sync local → Turso -------
 
   async syncLocalToCloud() {

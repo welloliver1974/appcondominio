@@ -59,14 +59,20 @@ FORMATO DO JSON (apenas se for lançar algo):
   "payload": {
     "data": "YYYY-MM-DD",
     "tipo": "receita" | "despesa",
-    "categoria": "agua" | "luz" | "conserto" | "condominio" | "outro",
+    "categoria": "agua" | "luz" | "limpeza" | "conserto" | "condominio" | "area_comum" | "reserva" | "outro",
     "valor": 150.00,
     "descricao": "Breve descrição",
     "apto_id": "101" | "102" | "201" | "202" | "comum"
   }
 }
 \`\`\`
-Dica: se for ler uma conta/boleto na imagem anexada, extraia o valor total exato e o tipo (ex: energia = luz, sabesp/caesb = agua). Apto comum para contas gerais.
+Dica para leitura de contas via FOTO:
+	- Extraia o valor TOTAL exato (procure "Total a Pagar", "Valor", "R$").
+	- Identifique o tipo: se for conta de LUZ/energia → categoria "luz". Se for conta de ÁGUA/sabesp/caesb → "agua". Limpeza → "limpeza". Outros → "outro".
+	- Use a data de vencimento da conta no campo "data" do JSON.
+	- Se o usuário disser "paguei" ou "foi paga", marque a data como a atual ou a de vencimento.
+	- Contas de água, luz e limpeza são do condomínio inteiro → use apto_id "comum".
+	- Contas de condomínio (receita) sempre vinculadas ao apto do morador.
 Nunca retorne o JSON se não for para salvar/alterar o banco.`;
 
     // Construct Messages array (OpenAI Format)

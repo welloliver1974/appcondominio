@@ -176,6 +176,39 @@
           </div>
         </div>
 
+        <!-- Monthly Summary -->
+        <div class="glass-container mt-2">
+          <div class="box-header">
+            <h2>📊 Resumo do Mês</h2>
+          </div>
+          <div class="monthly-summary-grid" id="monthly-summary">
+            <div class="summary-item">
+              <span class="summary-label">Receitas</span>
+              <span class="summary-value text-emerald" id="summary-receitas">R$ 0,00</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Despesas</span>
+              <span class="summary-value text-rose" id="summary-despesas">R$ 0,00</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Saldo do Mês</span>
+              <span class="summary-value" id="summary-saldo-mes">R$ 0,00</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Condomínios</span>
+              <span class="summary-value" id="summary-condominios">0/4 pagos</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">vs Mês Passado</span>
+              <span class="summary-value" id="summary-vs-mes-passado">—</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Fundo Reserva</span>
+              <span class="summary-value" id="summary-reserva">R$ 0,00</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Recent Transactions -->
         <div class="glass-container mt-2">
           <div class="box-header">
@@ -370,6 +403,7 @@
                     <option value="condominio">Taxa de Condomínio</option>
                     <option value="agua">Conta de Água</option>
                     <option value="luz">Conta de Luz</option>
+                    <option value="limpeza">Serviço de Limpeza</option>
                     <option value="conserto">Conserto / Manutenção</option>
                     <option value="area_comum">Taxa de Área Comum</option>
                     <option value="reserva">Fundo de Reserva</option>
@@ -413,7 +447,10 @@
                   <option value="condominio">Condomínio</option>
                   <option value="agua">Água</option>
                   <option value="luz">Luz</option>
+                  <option value="limpeza">Limpeza</option>
                   <option value="conserto">Conserto</option>
+                  <option value="area_comum">Área Comum</option>
+                  <option value="reserva">Reserva</option>
                   <option value="outro">Outros</option>
                 </select>
               </div>
@@ -566,6 +603,25 @@
                 <button type="submit" class="btn btn-primary" id="btn-save-llm"><i class='bx bx-save'></i> Salvar IA</button>
               </div>
             </form>
+          </div>
+
+          <!-- Contas Fixas / Recorrentes -->
+          <div class="glass-container">
+            <div class="box-header">
+              <h2><i class='bx bx-calendar-repeat'></i> Contas Fixas do Mês</h2>
+            </div>
+            <p class="config-desc">Gerencie as contas que se repetem todo mês. Ao gerar o mês, o app cria automaticamente as despesas no histórico financeiro.</p>
+
+            <div id="recurring-bills-list" class="mt-1">
+              <!-- Dynamic recurring bills list -->
+            </div>
+
+            <div class="btn-group-row mt-1">
+              <button type="button" class="btn btn-primary" id="btn-generate-monthly-bills">
+                <i class='bx bx-calendar-check'></i> Gerar Contas deste Mês
+              </button>
+              <span id="monthly-bills-status" class="badge badge-info" style="display:none;"></span>
+            </div>
           </div>
 
           <!-- App Data Control -->
