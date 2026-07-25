@@ -149,7 +149,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // DB Cloud Connection Indicator
   function updateDbStatusBadge() {
-    if (window.condoDb.isSbConnected) {
+    if (window.condoDb.isTursoConnected) {
       elements.dbStatus.className = "db-status-badge online";
       elements.dbStatus.querySelector(".status-text").textContent = "Nuvem Conectada";
     } else {
