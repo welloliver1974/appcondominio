@@ -273,7 +273,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Alert systems
-    generateDashboardAlerts(residents, saldoCaixa);
+    generateDashboardAlerts(residents, saldoCaixa, transactions.length > 0);
 
     // Recent Transactions Table
     renderRecentTransactions(transactions);
@@ -285,9 +285,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     checkMonthlyBillsAlert();
   }
 
-  function generateDashboardAlerts(residents, saldoCaixa) {
+  function generateDashboardAlerts(residents, saldoCaixa, hasTransactions) {
     elements.dashboardAlerts.innerHTML = "";
-    const pendingUnits = residents.filter(r => r.status_pagamento !== "pago");
+    // Only show pending alerts for residents that have been configured (have a name)
+    const pendingUnits = residents.filter(r => r.status_pagamento !== "pago" && r.morador);
     let hasAlerts = false;
 
     // A. Pending payments alert
@@ -310,8 +311,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
-    // B. Low balance warning
-    if (saldoCaixa < 150) {
+    // B. Low balance warning (only if there are actual transactions)
+    if (hasTransactions && saldoCaixa < 150) {
       hasAlerts = true;
       const alertItem = document.createElement("div");
       alertItem.className = "alert-item";

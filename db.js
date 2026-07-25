@@ -188,7 +188,7 @@ class CondoDatabase {
 
   initializeLocalDB() {
     // Storage version check — bump to force clear stale data
-    const STORAGE_VERSION = "3";
+    const STORAGE_VERSION = "4";
     const storedVersion = localStorage.getItem("CONDO_DB_VERSION");
     if (storedVersion !== STORAGE_VERSION) {
       // Clear all old-format data so defaults take effect
