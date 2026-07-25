@@ -584,7 +584,7 @@ body {
 }
 
 .alert-icon.warning { color: var(--amber); background: var(--amber-glow); }
-.showToast("Backup importado com sucesso! Recarregando dados...", "success"); background: var(--cyan-glow); }
+.alert-icon.info { color: var(--cyan); background: var(--cyan-glow); }
 
 .alert-content {
   flex-grow: 1;
@@ -595,7 +595,7 @@ body {
   font-weight: 600;
 }
 
-.showToast(`Informações do Apto ${apto} atualizadas com sucesso!`, "success");
+.alert-content p {
   color: var(--text-muted);
   margin-top: 0.15rem;
 }
@@ -1307,7 +1307,6 @@ input:focus, select:focus {
     width: 100%;
   }
 }
-/* ==========================================================================\n   UTILITY CLASSES - SPACING, FLEX, TYPOGRAPHY, MISC\n   ========================================================================== */\n\n/* Spacing Utilities */\n.mt-1 { margin-top: 1rem; }\n.mt-2 { margin-top: 1.5rem; }\n.mt-3 { margin-top: 2.5rem; }\n.mb-1 { margin-bottom: 1rem; }\n.p-1 { padding: 1rem; }\n.w-full { width: 100%; }\n\n/* Typography */\n.font-bold { font-weight: 700; }\n.font-secondary { font-weight: 600; font-style: italic; }\n.text-sm { font-size: 0.875rem; }\n.text-center { text-align: center; }\n\n/* Flex helpers */\n.flex-column { flex-direction: column !important; }\n.flex-row { flex-direction: row !important; }\n.md-flex-row { flex-direction: row; flex-wrap: wrap; }\n.flex-align-center { align-items: center; }\n\n/* Filters Row */\n.filters-row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }\n\n.form-control-sm { background: rgba(15, 23, 42, 0.55); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 0.45rem 0.8rem; color: var(--text-main); font-size: 0.82rem; outline: none; cursor: pointer; transition: var(--transition-smooth); }\n.form-control-sm:focus { border-color: var(--primary); }\n\n.modal-body { padding-top: 0.5rem; }\n\n.unit-form-side h3, .unit-payments-side h3 { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1rem; }\n\n/* TOAST NOTIFICATION SYSTEM */\n.toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none; }\n.toast { display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem 1.25rem; border-radius: var(--radius-md); background: rgba(22, 28, 45, 0.97); backdrop-filter: blur(14px); border: 1px solid var(--border-light); box-shadow: 0 8px 30px rgba(0,0,0,0.5); min-width: 300px; max-width: 400px; pointer-events: all; animation: toast-in 0.35s cubic-bezier(0.4,0,0.2,1); }\n@keyframes toast-in { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; function formatDateBR(dateStr) {\n    const parts = dateStr.split("-");\n    if (parts.length !== 3) return dateStr;\n    return `${parts[2]}/${parts[1]}/${parts[0]}`;\n  }\n\n  // Toast notification utility\n  function showToast(message, type = "info") {\n    const container = document.getElementById("toast-container") || (() => {\n      const div = document.createElement("div");\n      div.id = "toast-container";\n      div.className = "toast-container";\n      document.body.appendChild(div);\n      return div;\n    })();\n    const toast = document.createElement("div");\n    toast.className = `toast ${type === "error" ? "error" : type === "success" ? "success" : ""}`;\n    toast.textContent = message;\n    container.appendChild(toast);\n    setTimeout(() => {\n      toast.remove();\n    }, 3000);\n  } }\n.toast.removing { animation: toast-out 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }\n.toast-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 0.1rem; }\n.toast-success .toast-icon { color: var(--emerald); }\n.toast-error .toast-icon { color: var(--rose); }\n.toast-info .toast-icon { color: var(--cyan); }\n.toast-warning .toast-icon { color: var(--amber); }\n.toast-content { flex-grow: 1; }\n.toast-title { font-size: 0.9rem; font-weight: 700; }\n.toast-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; line-height: 1.4; }\n\n/* CATEGORY COLOR CHIPS */\n.cat-chip { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }\n.cat-condominio { background: var(--primary-glow); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }\n.cat-agua { background: var(--cyan-glow); color: #67e8f9; border: 1px solid rgba(6,182,212,0.3); }\n.cat-luz { background: var(--amber-glow); color: #fde047; border: 1px solid rgba(245,158,11,0.3); }\n.cshowToast("Lançamento financeiro registrado com sucesso!", "success"); color: #fda4af; border: 1px solid rgba(244,63,94,0.3); }\n.cat-reserva { background: rgba(52,211,153,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }\n.cat-area_comum { background: rgba(139,92,246,0.1); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.3); }\n.cat-outro { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }\n\n/* MONTHLY REPORT BLOCK */\n.report-block { background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 1rem; margin-top: 0.75rem; }\n.report-block .report-row { display: flex; justify-content: space-between; padding: 0.45rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.875rem; }\n.report-block .report-row:last-child { border-bottom: none; }\n.report-block .report-label { color: var(--text-muted); }\n\n/* MOBILE PATCHES */\n@media (max-width: 768px) { .chat-container-box { height: auto; min-height: 70vh; } .ai-chat-layout { height: auto; } .chart-wrapper { overflow-x: auto; } .svg-chart { min-width: 360px; } .box-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; } .toast-container { bottom: 85px; right: 1rem; left: 1rem; } .toast { min-width: unset; width: 100%; } }
 /* ==========================================================================
    UTILITY CLASSES - SPACING, FLEX, TYPOGRAPHY
    ========================================================================== */
@@ -1454,37 +1453,6 @@ input:focus, select:focus {
 /* ==========================================================================
    EXTRA MOBILE PATCHES
    ========================================================================== */
-
-/* Toast Notifications */
-.toast-container {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.toast {
-  min-width: 250px;
-  max-width: 300px;
-  background: rgba(15, 23, 42, 0.9);
-  color: var(--text-main);
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-premium);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  animation: toast-fade 0.3s ease-out, toast-slide 0.3s ease-out;
-}
-
-.toast.success { background: var(--emerald-glow); }
-.toast.error { background: var(--rose-glow); }
-
-@keyframes toast-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes toast-slide { from { transform: translateY(-10px); } to { transform: translateY(0); } }
 @media (max-width: 768px) {
   .chat-container-box { height: auto; min-height: 70vh; }
   .ai-chat-layout { height: auto; }
