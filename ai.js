@@ -7,7 +7,7 @@ class CondoAI {
     this.db = db;
   }
 
-  async processCommand(text, imageBase64 = null) {
+  async processCommand(text, imageBase64 = null, onChunk = null) {
     const apiUrl = localStorage.getItem('llm_url');
     const apiKey = localStorage.getItem('llm_key');
     const model = localStorage.getItem('llm_model');
@@ -39,13 +39,36 @@ class CondoAI {
 
     const todayDate = new Date().toISOString().split("T")[0];
 
+    // Calculate average of last 3 months for variable bills (smart suggestions)
+    function calcAverage(categoria) {
+      const now = new Date();
+      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+      const relevant = transactions.filter(t =>
+        t.categoria === categoria &&
+        t.tipo === "despesa" &&
+        new Date(t.data) >= threeMonthsAgo &&
+        new Date(t.data) <= now
+      );
+      if (relevant.length === 0) return null;
+      const sum = relevant.reduce((acc, t) => acc + t.valor, 0);
+      return sum / relevant.length;
+    }
+    const mediaAgua = calcAverage("agua");
+    const mediaLuz = calcAverage("luz");
+    let sugestaoMedia = "";
+    if (mediaAgua || mediaLuz) {
+      sugestaoMedia = "\n- Média de Gastos (últimos 3 meses):";
+      if (mediaAgua) sugestaoMedia += ` Água ~R$ ${mediaAgua.toFixed(2)}`;
+      if (mediaLuz) sugestaoMedia += ` Luz ~R$ ${mediaLuz.toFixed(2)}`;
+    }
+
     // Build System Prompt
     const systemPrompt = `Você é o GestãoApp AI, o assistente inteligente de gestão do condomínio.
-    
+
 INFORMAÇÕES ATUAIS DO CONDOMÍNIO (HOJE: ${todayDate}):
 - Saldo em Caixa: R$ ${saldo.toFixed(2)}
 - Fundo de Reserva: R$ ${reserva.toFixed(2)}
-- Unidades Pendentes de Pagamento: ${pendentesList}
+- Unidades Pendentes de Pagamento: ${pendentesList}${sugestaoMedia}
 
 INSTRUÇÕES:
 1. Responda de forma amigável, direta e profissional. Formate os valores em Reais (R$).
@@ -96,7 +119,8 @@ Nunca retorne o JSON se não for para salvar/alterar o banco.`;
         { role: "system", content: systemPrompt },
         { role: "user", content: userContent }
       ],
-      temperature: 0.1
+      temperature: 0.1,
+      stream: onChunk ? true : false
     };
 
     // Make the API Request
@@ -113,8 +137,16 @@ Nunca retorne o JSON se não for para salvar/alterar o banco.`;
       throw new Error(`API HTTP Error: ${response.status}`);
     }
 
-    const resultData = await response.json();
-    const assistantMessage = resultData.choices[0].message.content;
+    let assistantMessage;
+
+    if (onChunk) {
+      // Streaming response — read SSE chunks
+      assistantMessage = await this._readStream(response, onChunk);
+    } else {
+      // Regular response
+      const resultData = await response.json();
+      assistantMessage = resultData.choices[0].message.content;
+    }
 
     // Check if there is a JSON block to execute
     const jsonMatch = assistantMessage.match(/```json\s*([\s\S]*?)\s*```/);
@@ -145,6 +177,57 @@ Nunca retorne o JSON se não for para salvar/alterar o banco.`;
       message: assistantMessage,
       actionExecuted: false
     };
+  }
+
+  /**
+   * Read an SSE stream from the API response, calling onChunk(text) for each content delta.
+   * Returns the full accumulated message text.
+   */
+  async _readStream(response, onChunk) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = "";
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith("data: ")) continue;
+        const data = trimmed.slice(6);
+        if (data === "[DONE]") continue;
+
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed.choices?.[0]?.delta?.content;
+          if (delta) {
+            fullText += delta;
+            onChunk(fullText);
+          }
+        } catch (e) {
+          // Skip malformed chunks
+        }
+      }
+    }
+
+    if (buffer.trim() && buffer.trim().startsWith("data: ")) {
+      const data = buffer.trim().slice(6);
+      if (data !== "[DONE]") {
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed.choices?.[0]?.delta?.content;
+          if (delta) fullText += delta;
+        } catch (e) {}
+      }
+    }
+
+    return fullText;
   }
 }
 

@@ -751,6 +751,71 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // ==========================================================================
+  // VOICE INPUT (Speech Recognition)
+  // ==========================================================================
+  const voiceBtn = document.getElementById("btn-voice-input");
+  let isRecording = false;
+  let recognition = null;
+
+  if (voiceBtn) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = "pt-BR";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      voiceBtn.addEventListener("click", () => {
+        if (isRecording) {
+          recognition.stop();
+          return;
+        }
+
+        try {
+          recognition.start();
+          isRecording = true;
+          voiceBtn.classList.add("recording");
+          voiceBtn.title = "Clique para parar";
+        } catch (e) {
+          showToast('warning', 'Voz', 'Não foi possível iniciar o microfone.');
+        }
+      });
+
+      recognition.onresult = (event) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        elements.chatUserInput.value = transcript;
+
+        // If final result, auto-submit
+        if (event.results[event.results.length - 1].isFinal) {
+          elements.chatUserInput.value = transcript.charAt(0).toUpperCase() + transcript.slice(1);
+          setTimeout(() => elements.chatInputForm.dispatchEvent(new Event("submit")), 300);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.warn("Speech error:", event.error);
+        if (event.error === "no-speech" || event.error === "aborted") return;
+        showToast('warning', 'Voz', 'Não entendi. Tente falar mais claro ou digitar.');
+      };
+
+      recognition.onend = () => {
+        isRecording = false;
+        voiceBtn.classList.remove("recording");
+        voiceBtn.title = "Comando de Voz";
+      };
+    } else {
+      // Speech not supported fallback
+      voiceBtn.style.opacity = "0.3";
+      voiceBtn.title = "Voz não disponível neste navegador";
+    }
+  }
+
   if (elements.chatInputForm) {
     elements.chatInputForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -768,23 +833,50 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       elements.chatUserInput.value = "";
 
-      // Simulate thinking animation
-      const thinkingEl = appendThinkingBubble();
-      
-      // Delay so UI updates
+      // Create a streaming message bubble
+      const msgContainer = elements.chatMessagesContainer;
+      const streamMsgEl = document.createElement("div");
+      streamMsgEl.className = "chat-msg system";
+      streamMsgEl.innerHTML = `
+        <div class="msg-avatar"><i class="bx bxs-bot"></i></div>
+        <div class="msg-bubble streaming"><span class="stream-content"></span><span class="stream-cursor">|</span></div>
+      `;
+      msgContainer.appendChild(streamMsgEl);
+      msgContainer.scrollTop = msgContainer.scrollHeight;
+
+      const streamContent = streamMsgEl.querySelector(".stream-content");
+
+      // Small delay so UI updates before fetch starts
       setTimeout(async () => {
         try {
-          const response = await window.condoAi.processCommand(prompt, imagePayload);
-          thinkingEl.remove();
-          appendChatMessage("system", response.message);
-          
-          // Refresh app state if action happened
-          if (response.actionExecuted) {
-            updateDashboardData();
+          const response = await window.condoAi.processCommand(prompt, imagePayload, (fullTextSoFar) => {
+            streamContent.textContent = fullTextSoFar;
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+          });
+
+          // Remove cursor when done
+          streamMsgEl.querySelector(".stream-cursor")?.remove();
+
+          // Check for JSON action blocks in the message
+          const jsonMatch = response.message.match(/```json\s*([\s\S]*?)\s*```/);
+          if (jsonMatch) {
+            try {
+              const jsonBlock = JSON.parse(jsonMatch[1]);
+              if (jsonBlock.action === "addTransaction" && jsonBlock.payload) {
+                await window.condoDb.addTransaction(jsonBlock.payload);
+                const cleanMessage = response.message.replace(/```json\s*[\s\S]*?\s*```/, "").trim();
+                streamContent.textContent = cleanMessage || "🤖 Transação registrada com sucesso!";
+                updateDashboardData();
+              }
+            } catch (e) {
+              console.error("Erro ao processar JSON streaming:", e);
+            }
+          } else if (response.message && response.message !== streamContent.textContent) {
+            streamContent.textContent = response.message;
           }
         } catch (error) {
-          thinkingEl.remove();
-          appendChatMessage("system", "🤖 **Erro:** Não foi possível me conectar com o provedor de IA. Verifique as configurações (URL e API Key).");
+          streamContent.innerHTML = "🤖 **Erro:** Não foi possível me conectar com o provedor de IA. Verifique as configurações (URL e API Key).";
+          streamMsgEl.querySelector(".stream-cursor")?.remove();
           console.error(error);
         }
       }, 50);
@@ -1171,6 +1263,63 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // ==========================================================================
+  // BROWSER NOTIFICATIONS
+  // ==========================================================================
+  let notifiedThisSession = false;
+
+  async function checkAndNotify() {
+    if (notifiedThisSession) return;
+    if (!("Notification" in window)) return;
+
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
+      return;
+    }
+    if (Notification.permission !== "granted") return;
+
+    const transactions = await window.condoDb.getTransactions();
+    const residents = await window.condoDb.getResidents();
+
+    let totalReceitas = 0, totalDespesas = 0;
+    transactions.forEach(t => {
+      if (t.tipo === "receita") totalReceitas += t.valor;
+      else totalDespesas += t.valor;
+    });
+    const saldo = totalReceitas - totalDespesas;
+
+    // Low balance alert
+    if (saldo < 100 && transactions.length > 0) {
+      new Notification("⚠️ Saldo em Caixa Baixo", {
+        body: `O saldo atual é de R$ ${saldo.toFixed(2)}. Evite novos gastos.`,
+        icon: "./icons/icon-192.png"
+      });
+      notifiedThisSession = true;
+      return;
+    }
+
+    // Pending residents alert
+    const pendentes = residents.filter(r => r.status_pagamento !== "pago");
+    if (pendentes.length > 0) {
+      new Notification("🏠 Condomínio Pendente", {
+        body: `${pendentes.length} unidade(s) com pagamento pendente: ${pendentes.map(r => `Apto ${r.apto}`).join(", ")}`,
+        icon: "./icons/icon-192.png"
+      });
+      notifiedThisSession = true;
+      return;
+    }
+
+    // Monthly bills not generated
+    const monthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    if (window.condoDb.getLastGeneratedMonth && window.condoDb.getLastGeneratedMonth() !== monthKey) {
+      new Notification("📋 Contas do Mês", {
+        body: "As contas fixas deste mês ainda não foram geradas. Vá em Ajustes para gerar.",
+        icon: "./icons/icon-192.png"
+      });
+      notifiedThisSession = true;
+    }
+  }
+
   // Helper formatting routines
   function formatDateBR(dateStr) {
     const parts = dateStr.split("-");
@@ -1180,6 +1329,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Run initial dashboard load
   updateDashboardData();
+
+  // Run notification check after dashboard loads
+  setTimeout(checkAndNotify, 2000);
 });
 
   // ==========================================================================

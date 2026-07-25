@@ -537,9 +537,12 @@
 
             <!-- Input Bar -->
             <form id="chat-input-form" class="chat-input-bar">
-              <input type="file" id="chat-image-input" accept="image/*" class="hidden">
+              <input type="file" id="chat-image-input" accept="image/*" capture="environment" class="hidden">
               <button type="button" class="btn-icon" id="btn-attach-image" title="Anexar Conta/Boleto">
                 <i class="bx bx-camera"></i>
+              </button>
+              <button type="button" class="btn-icon btn-voice" id="btn-voice-input" title="Comando de Voz">
+                <i class="bx bx-microphone"></i>
               </button>
               <input type="text" id="chat-user-input" placeholder="Escreva seu comando em linguagem natural aqui..." autocomplete="off">
               <button type="submit" class="btn btn-primary btn-chat-send">
