@@ -1542,6 +1542,16 @@ input:focus, select:focus {
   min-width: 0;
   width: 100%;
 }
+
+/* Description field wider, others more compact */
+.recurring-bill-row .form-group:has(.bill-desc) {
+  flex: 2 0 calc(40% - 0.75rem);
+}
+.recurring-bill-row .form-group:has(.bill-category),
+.recurring-bill-row .form-group:has(.bill-value),
+.recurring-bill-row .form-group:has(.bill-day) {
+  flex: 1 0 calc(20% - 0.75rem);
+}
 .stream-cursor {
   animation: cursor-blink 0.8s step-end infinite;
   font-weight: 300;
