@@ -188,7 +188,10 @@ class CondoDatabase {
 
   initializeLocalDB() {
     if (!localStorage.getItem("CONDO_RESIDENTS")) {
-      localStorage.setItem("CONDO_RESIDENTS", JSON.stringify(DEFAULT_RESIDENTS));
+      const savedValue = localStorage.getItem("CONDO_DEFAULT_VALUE");
+      const defaultVal = savedValue ? parseFloat(savedValue) : 250.00;
+      const residents = DEFAULT_RESIDENTS.map(r => ({ ...r, valor: defaultVal }));
+      localStorage.setItem("CONDO_RESIDENTS", JSON.stringify(residents));
     }
     if (!localStorage.getItem("CONDO_TRANSACTIONS")) {
       localStorage.setItem("CONDO_TRANSACTIONS", JSON.stringify(DEFAULT_TRANSACTIONS));

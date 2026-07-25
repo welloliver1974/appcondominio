@@ -82,6 +82,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     btnExportData: document.getElementById("btn-export-data"),
     btnImportData: document.getElementById("btn-import-data"),
     btnResetData: document.getElementById("btn-reset-data"),
+    condoValueForm: document.getElementById("condo-value-form"),
+    defaultCondoValue: document.getElementById("default-condo-value"),
+    btnSaveCondoValue: document.getElementById("btn-save-condo-value"),
     
     // Quick modal & trigger
     btnQuickTransaction: document.getElementById("btn-quick-transaction"),
@@ -893,6 +896,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       localStorage.setItem('llm_key', key);
       
       showToast('success', 'IA Configurada', 'As configurações do provedor LLM foram salvas.');
+    });
+  }
+
+  // ==========================================================================
+  // CONDO VALUE PADRÃO
+  // ==========================================================================
+
+  // Load saved condo value
+  const savedCondoValue = localStorage.getItem('CONDO_DEFAULT_VALUE');
+  if (savedCondoValue && elements.defaultCondoValue) {
+    elements.defaultCondoValue.value = savedCondoValue;
+  }
+
+  if (elements.condoValueForm) {
+    elements.condoValueForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const value = parseFloat(elements.defaultCondoValue.value);
+      if (!value || value <= 0) {
+        showToast('warning', 'Valor inválido', 'Digite um valor maior que zero.');
+        return;
+      }
+
+      // Save as default
+      localStorage.setItem('CONDO_DEFAULT_VALUE', value.toString());
+
+      // Update all residents with this new value
+      const residents = JSON.parse(localStorage.getItem('CONDO_RESIDENTS')) || [];
+      residents.forEach(r => { r.valor = value; });
+      localStorage.setItem('CONDO_RESIDENTS', JSON.stringify(residents));
+
+      showToast('success', 'Valor Atualizado', `Taxa de condomínio definida como R$ ${value.toFixed(2)} para todas as unidades.`);
     });
   }
 
