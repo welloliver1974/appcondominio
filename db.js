@@ -187,6 +187,23 @@ class CondoDatabase {
   // ------- Local DB initialisation -------
 
   initializeLocalDB() {
+    // Storage version check — bump to force clear stale data
+    const STORAGE_VERSION = "2";
+    const storedVersion = localStorage.getItem("CONDO_DB_VERSION");
+    if (storedVersion !== STORAGE_VERSION) {
+      // Clear all old-format data so defaults take effect
+      const keepKeys = ["llm_url", "llm_model", "llm_key", "CONDO_TURSO_URL", "CONDO_TURSO_TOKEN", "CONDO_DEFAULT_VALUE"];
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("CONDO_") && !keepKeys.includes(key)) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      localStorage.setItem("CONDO_DB_VERSION", STORAGE_VERSION);
+    }
+
     if (!localStorage.getItem("CONDO_RESIDENTS")) {
       const savedValue = localStorage.getItem("CONDO_DEFAULT_VALUE");
       const defaultVal = savedValue ? parseFloat(savedValue) : 250.00;
