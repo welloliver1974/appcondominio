@@ -668,6 +668,13 @@
                 <button type="submit" class="btn btn-primary" id="btn-save-turso"><i class='bx bx-link'></i> Salvar & Conectar</button>
                 <button type="button" class="btn btn-secondary" id="btn-disconnect-turso"><i class='bx bx-unlink'></i> Desconectar</button>
               </div>
+              <div class="form-group mt-1">
+                <label class="toggle-switch" style="display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0; background:none; border:none;">
+                  <input type="checkbox" id="turso-auto-sync">
+                  <span class="toggle-slider"></span>
+                  <span>Sincronizar automaticamente ao abrir o app</span>
+                </label>
+              </div>
             </form>
           </div>
 
@@ -780,6 +787,31 @@
                 <span class="toggle-slider"></span>
                 <span id="pin-status-text">Proteção desativada</span>
               </label>
+            </div>
+          </div>
+
+          <!-- Custom Reminders -->
+          <div class="glass-container">
+            <div class="box-header">
+              <h2><i class='bx bx-bell'></i> Lembretes</h2>
+            </div>
+            <p class="config-desc">Crie lembretes para datas importantes. Eles aparecerão na dashboard e dispararão notificação no dia.</p>
+            <div class="form-row mt-1 reminder-form-row">
+              <div class="form-group" style="flex:2;">
+                <label>Descrição</label>
+                <input type="text" id="reminder-desc" class="form-control-sm" placeholder="Ex: Vistoria do elevador">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label>Data</label>
+                <input type="date" id="reminder-date" class="form-control-sm">
+              </div>
+              <div class="form-group" style="flex:0 0 auto; justify-content:flex-end;">
+                <label style="opacity:0;">Adicionar</label>
+                <button class="btn btn-sm btn-primary" id="btn-add-reminder"><i class="bx bx-plus"></i></button>
+              </div>
+            </div>
+            <div class="reminder-list mt-1" id="reminder-list">
+              <!-- Dynamic -->
             </div>
           </div>
 

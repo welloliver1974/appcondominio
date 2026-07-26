@@ -268,6 +268,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   updateDbStatusBadge();
 
+  // Auto-sync with Turso on startup
+  const autoSyncEnabled = localStorage.getItem('CONDO_AUTO_SYNC') === 'true';
+  if (autoSyncEnabled && window.condoDb.isTursoConnected) {
+    const btnSync = document.getElementById('btn-sync-turso');
+    if (btnSync) btnSync.click();
+  }
+
   // ==========================================================================
   // VIEW LOGIC: DASHBOARD
   // ==========================================================================
@@ -1305,6 +1312,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         elements.btnSaveTurso.disabled = false;
       }
     });
+
+    // Auto-sync toggle
+    const autoSyncCheckbox = document.getElementById('turso-auto-sync');
+    if (autoSyncCheckbox) {
+      autoSyncCheckbox.checked = localStorage.getItem('CONDO_AUTO_SYNC') === 'true';
+      autoSyncCheckbox.addEventListener('change', () => {
+        localStorage.setItem('CONDO_AUTO_SYNC', autoSyncCheckbox.checked ? 'true' : 'false');
+      });
+    }
   }
 
   if (elements.btnDisconnectTurso) {
@@ -1457,6 +1473,79 @@ document.addEventListener("DOMContentLoaded", async () => {
       showToast('success', 'PIN Salvo', 'PIN de proteção configurado com sucesso!');
     });
   }
+
+  // ==========================================================================
+  // CUSTOM REMINDERS
+  // ==========================================================================
+
+  function getReminders() {
+    try { return JSON.parse(localStorage.getItem('CONDO_REMINDERS') || '[]'); }
+    catch(e) { return []; }
+  }
+
+  function saveReminders(list) {
+    localStorage.setItem('CONDO_REMINDERS', JSON.stringify(list));
+  }
+
+  function renderReminderList() {
+    const list = document.getElementById('reminder-list');
+    if (!list) return;
+    const reminders = getReminders().sort((a,b) => new Date(a.date) - new Date(b.date));
+    if (reminders.length === 0) {
+      list.innerHTML = '<p class="text-muted" style="text-align:center;padding:1rem;">Nenhum lembrete cadastrado.</p>';
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    list.innerHTML = reminders.map((r, i) => {
+      let cls = 'reminder-item';
+      if (r.date < today) cls += ' overdue';
+      else if (r.date === today) cls += ' due';
+      return `<div class="${cls}">
+        <div class="reminder-info">
+          <strong>${escHtml(r.desc)}</strong>
+          <span>${new Date(r.date + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
+        </div>
+        <button class="btn-close-sm" data-index="${i}"><i class="bx bx-x"></i></button>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.btn-close-sm').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index);
+        const all = getReminders();
+        all.splice(idx, 1);
+        saveReminders(all);
+        renderReminderList();
+      });
+    });
+  }
+
+  function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  const btnAdd = document.getElementById('btn-add-reminder');
+  const descInput = document.getElementById('reminder-desc');
+  const dateInput = document.getElementById('reminder-date');
+  if (btnAdd && descInput && dateInput) {
+    dateInput.value = new Date().toISOString().split('T')[0];
+    btnAdd.addEventListener('click', () => {
+      const desc = descInput.value.trim();
+      const date = dateInput.value;
+      if (!desc) { showToast('warning', 'Descrição', 'Digite uma descrição para o lembrete.'); return; }
+      if (!date) { showToast('warning', 'Data', 'Selecione uma data.'); return; }
+      const reminders = getReminders();
+      reminders.push({ desc, date, createdAt: new Date().toISOString() });
+      saveReminders(reminders);
+      descInput.value = '';
+      renderReminderList();
+      showToast('success', 'Lembrete Criado', `Lembrete para ${new Date(date + 'T12:00:00').toLocaleDateString('pt-BR')}`);
+    });
+    descInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnAdd.click(); });
+  }
+
+  renderReminderList();
 
   // ==========================================================================
   // WHATSAPP INTEGRATION
@@ -1631,6 +1720,55 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
   }
+
+  // Dashboard reminders check
+  function checkCustomReminders() {
+    const reminders = getReminders();
+    const today = new Date().toISOString().split('T')[0];
+    const dueToday = reminders.filter(r => r.date === today);
+    const overdue = reminders.filter(r => r.date < today);
+
+    if (dueToday.length > 0) {
+      const alertsContainer = document.getElementById("dashboard-alerts");
+      if (alertsContainer) {
+        const alertItem = document.createElement("div");
+        alertItem.className = "alert-item";
+        alertItem.innerHTML = `
+          <i class="bx bx-bell alert-icon warning" style="color:var(--amber);background:var(--amber-glow);"></i>
+          <div class="alert-content">
+            <h4>📌 Lembrete${dueToday.length > 1 ? 's' : ''} Hoje</h4>
+            <p>${dueToday.map(r => escHtml(r.desc)).join(', ')}</p>
+          </div>
+        `;
+        alertsContainer.prepend(alertItem);
+      }
+      if ("Notification" in window && Notification.permission === "granted") {
+        dueToday.forEach(r => {
+          new Notification("📌 Lembrete", {
+            body: r.desc,
+            icon: "./icons/icon-192.png"
+          });
+        });
+      }
+    }
+    if (overdue.length > 0) {
+      const alertsContainer = document.getElementById("dashboard-alerts");
+      if (alertsContainer) {
+        const alertItem = document.createElement("div");
+        alertItem.className = "alert-item";
+        alertItem.innerHTML = `
+          <i class="bx bx-error alert-icon warning" style="color:var(--rose);background:var(--rose-glow);"></i>
+          <div class="alert-content">
+            <h4>⚠️ ${overdue.length} Lembrete${overdue.length > 1 ? 's' : ''} Atrasado${overdue.length > 1 ? 's' : ''}</h4>
+            <p>${overdue.map(r => `${escHtml(r.desc)} (${new Date(r.date + 'T12:00:00').toLocaleDateString('pt-BR')})`).join(', ')}</p>
+          </div>
+        `;
+        alertsContainer.prepend(alertItem);
+      }
+    }
+  }
+
+  setTimeout(checkCustomReminders, 500);
 
   // Backup Export
   if (elements.btnExportData) {
