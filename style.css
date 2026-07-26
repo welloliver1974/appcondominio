@@ -1699,6 +1699,69 @@ input:focus, select:focus {
 }
 
 /* ==========================================================================
+   PWA INSTALL BANNER
+   ========================================================================== */
+.pwa-install-banner {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9998;
+  background: rgba(22, 28, 45, 0.97);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 320px;
+  max-width: 420px;
+  animation: toast-in 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+.pwa-install-banner.hidden {
+  display: none !important;
+}
+
+.pwa-install-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pwa-install-content i {
+  font-size: 1.8rem;
+  color: var(--primary);
+}
+
+.pwa-install-content strong {
+  font-size: 0.95rem;
+}
+
+.pwa-install-content p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.pwa-install-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
+  .pwa-install-banner {
+    left: 1rem;
+    right: 1rem;
+    transform: none;
+    min-width: unset;
+  }
+}
+
+/* ==========================================================================
    EXTRA MOBILE PATCHES
    ========================================================================== */
 @media (max-width: 768px) {

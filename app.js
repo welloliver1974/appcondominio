@@ -295,6 +295,44 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Check monthly bills status
     checkMonthlyBillsAlert();
+
+    // Check upcoming due bills
+    checkUpcomingBillsAlert();
+  }
+
+  function checkUpcomingBillsAlert() {
+    const bills = window.condoDb.getRecurringBills();
+    const today = new Date();
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const alertsContainer = document.getElementById("dashboard-alerts");
+    if (!alertsContainer) return;
+
+    const upcomingBills = bills.filter(bill => {
+      const dueDay = bill.dia_vencimento;
+      const diff = dueDay - currentDay;
+      return diff >= 0 && diff <= 5;
+    });
+
+    upcomingBills.forEach(bill => {
+      const dueDay = bill.dia_vencimento;
+      const diff = dueDay - currentDay;
+      const daysText = diff === 0 ? "vence HOJE!" : `vence em ${diff} dia(s)`;
+      const catLabel = bill.categoria.charAt(0).toUpperCase() + bill.categoria.slice(1).replace("_", " ");
+      const valorText = bill.valor ? `R$ ${bill.valor.toFixed(2)}` : "valor variável";
+
+      const alertItem = document.createElement("div");
+      alertItem.className = "alert-item";
+      alertItem.innerHTML = `
+        <i class="bx bx-calendar-exclamation alert-icon info"></i>
+        <div class="alert-content">
+          <h4>${catLabel} ${daysText}</h4>
+          <p>${bill.descricao} - ${valorText}</p>
+        </div>
+      `;
+      alertsContainer.appendChild(alertItem);
+    });
   }
 
   function generateDashboardAlerts(residents, saldoCaixa, hasTransactions) {
@@ -1490,6 +1528,116 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("receipt-image").src = "";
     }
   });
+
+  // ==========================================================================
+  // EXPORTAR PDF / RELATORIO MENSAL
+  // ==========================================================================
+
+  document.getElementById("btn-export-pdf")?.addEventListener("click", async () => {
+    const transactions = await window.condoDb.getTransactions();
+    const residents = await window.condoDb.getResidents();
+    const reserva = window.condoDb.getFundoReserva();
+    const now = new Date();
+    const monthName = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    let receitas = 0, despesas = 0, rCount = 0, dCount = 0;
+    transactions.forEach(t => {
+      const d = new Date(t.data);
+      if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+        if (t.tipo === "receita") { receitas += t.valor; rCount++; }
+        else { despesas += t.valor; dCount++; }
+      }
+    });
+    const saldo = receitas - despesas;
+    const pagos = residents.filter(r => r.status_pagamento === "pago").length;
+    const total = residents.length;
+
+    const mountTrans = transactions.filter(t => {
+      const d = new Date(t.data);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    }).slice(0, 15);
+
+    const printWin = window.open('', '_blank', 'width=800,height=600');
+    printWin.document.write(`
+      <html>
+      <head><title>Relatorio Mensal - ${monthName}</title>
+      <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #222; }
+        h1 { font-size: 24px; margin-bottom: 5px; }
+        .sub { color: #666; font-size: 14px; margin-bottom: 30px; }
+        .grid { display: flex; gap: 16px; margin-bottom: 30px; flex-wrap: wrap; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px; min-width: 130px; flex: 1; }
+        .card-label { font-size: 12px; color: #888; text-transform: uppercase; }
+        .card-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+        .green { color: #10b981; } .red { color: #f43f5e; } .blue { color: #6366f1; }
+        h2 { font-size: 18px; margin-top: 30px; margin-bottom: 12px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+        th { color: #888; font-weight: 600; }
+        .footer { margin-top: 40px; font-size: 12px; color: #aaa; border-top: 1px solid #eee; padding-top: 15px; }
+      </style></head>
+      <body>
+        <h1>📊 Relatório Mensal - Condomínio</h1>
+        <div class="sub">${monthName} • Gerado em ${now.toLocaleDateString('pt-BR')}</div>
+
+        <div class="grid">
+          <div class="card"><div class="card-label">Receitas</div><div class="card-value green">R$ ${receitas.toFixed(2)}</div></div>
+          <div class="card"><div class="card-label">Despesas</div><div class="card-value red">R$ ${despesas.toFixed(2)}</div></div>
+          <div class="card"><div class="card-label">Saldo</div><div class="card-value ${saldo >= 0 ? 'blue' : 'red'}">R$ ${saldo.toFixed(2)}</div></div>
+          <div class="card"><div class="card-label">Condominios</div><div class="card-value">${pagos}/${total}</div></div>
+          <div class="card"><div class="card-label">Reserva</div><div class="card-value blue">R$ ${reserva.toFixed(2)}</div></div>
+        </div>
+
+        <h2>Lançamentos do Mês</h2>
+        ${mountTrans.length === 0 ? '<p style="color:#888;">Nenhum lançamento este mês.</p>' : `
+        <table>
+          <tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr>
+          ${mountTrans.map(t => `
+            <tr>
+              <td>${formatDateBR(t.data)}</td>
+              <td>${t.tipo === 'receita' ? 'Receita' : 'Despesa'}</td>
+              <td>${t.categoria.replace('_', ' ')}</td>
+              <td>${t.descricao}</td>
+              <td style="color:${t.tipo === 'receita' ? '#10b981' : '#f43f5e'}">${t.tipo === 'receita' ? '+' : '-'} R$ ${t.valor.toFixed(2)}</td>
+            </tr>
+          `).join('')}
+        </table>`}
+
+        <div class="footer">GestãoApp - Administrador de Condomínio • App condominio PWA</div>
+        <script>window.print();window.close();<\/script>
+      </body></html>
+    `);
+    printWin.document.close();
+  });
+});
+
+// ==========================================================================
+// PWA INSTALL BANNER
+// ==========================================================================
+let deferredInstallPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const banner = document.getElementById("pwa-install-banner");
+  if (banner) banner.classList.remove("hidden");
+});
+
+document.getElementById("btn-pwa-install")?.addEventListener("click", async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const result = await deferredInstallPrompt.userChoice;
+  if (result.outcome === "accepted") {
+    document.getElementById("pwa-install-banner")?.classList.add("hidden");
+  }
+  deferredInstallPrompt = null;
+});
+
+document.getElementById("btn-pwa-dismiss")?.addEventListener("click", () => {
+  document.getElementById("pwa-install-banner")?.classList.add("hidden");
+  deferredInstallPrompt = null;
 });
 
   // ==========================================================================

@@ -97,6 +97,9 @@
             <span class="indicator"></span>
             <span class="status-text">Modo Local</span>
           </span>
+          <button class="btn btn-secondary btn-sm" id="btn-export-pdf" title="Exportar relatório mensal em PDF">
+            <i class='bx bx-file'></i> PDF
+          </button>
           <button class="btn btn-primary" id="btn-quick-transaction">
             <i class="bx bx-plus"></i> Novo Lançamento
           </button>
@@ -705,6 +708,21 @@
     </main>
 
   </div>
+    <!-- PWA Install Banner -->
+    <div id="pwa-install-banner" class="pwa-install-banner hidden">
+      <div class="pwa-install-content">
+        <i class="bx bx-download"></i>
+        <div>
+          <strong>Instalar App</strong>
+          <p>Instale o GestãoApp na tela inicial para acesso rápido.</p>
+        </div>
+      </div>
+      <div class="pwa-install-actions">
+        <button class="btn btn-sm btn-secondary" id="btn-pwa-dismiss">Agora não</button>
+        <button class="btn btn-sm btn-primary" id="btn-pwa-install">Instalar</button>
+      </div>
+    </div>
+
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
 
