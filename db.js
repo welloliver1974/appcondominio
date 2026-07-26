@@ -358,6 +358,35 @@ class CondoDatabase {
     }
   }
 
+  async updateTransaction(id, data) {
+    const transactions = JSON.parse(localStorage.getItem("CONDO_TRANSACTIONS"));
+    const idx = transactions.findIndex(t => t.id === id);
+    if (idx === -1) return;
+
+    transactions[idx] = {
+      ...transactions[idx],
+      data: data.data,
+      tipo: data.tipo,
+      categoria: data.categoria,
+      valor: parseFloat(data.valor),
+      descricao: data.descricao,
+      apto_id: data.apto_id || null
+    };
+
+    localStorage.setItem("CONDO_TRANSACTIONS", JSON.stringify(transactions));
+
+    if (this.isTursoConnected) {
+      try {
+        await this.tursoClient.run(
+          "UPDATE transacoes SET data=?, tipo=?, categoria=?, valor=?, descricao=?, apto_id=? WHERE id=?",
+          [data.data, data.tipo, data.categoria, parseFloat(data.valor), data.descricao, data.apto_id || null, id]
+        );
+      } catch (e) {
+        console.error("Failed to update transaction in Turso:", e);
+      }
+    }
+  }
+
   // ------- Cash reserve -------
 
   getFundoReserva() {
