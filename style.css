@@ -39,6 +39,77 @@
 }
 
 /* ==========================================================================
+   LIGHT THEME OVERRIDES
+   ========================================================================== */
+[data-theme="light"] {
+  --bg-primary: #f1f5f9;
+  --bg-secondary: rgba(255, 255, 255, 0.7);
+  --bg-card: rgba(255, 255, 255, 0.75);
+  --border-light: rgba(0, 0, 0, 0.08);
+  --border-focus: rgba(99, 102, 241, 0.3);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-dark: #f8fafc;
+  --shadow-premium: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .orb {
+  opacity: 0.08;
+}
+
+[data-theme="light"] .nav-bar {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="light"] input,
+[data-theme="light"] select {
+  background: #ffffff;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] select:focus {
+  background: #ffffff;
+}
+
+[data-theme="light"] .data-table th {
+  background: #e2e8f0;
+}
+
+[data-theme="light"] .toast {
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+[data-theme="light"] .pwa-install-banner {
+  background: rgba(255, 255, 255, 0.97);
+}
+
+[data-theme="light"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] .toggle-switch {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Smooth theme transition on key elements */
+body, .nav-bar, .stat-card, .apartment-card,
+.chat-message, input, select, textarea, .data-table th,
+.data-table td, .toast, .modal-overlay, .pwa-install-banner,
+.config-section, .glass-container, .toggle-switch,
+.recurring-bill-row, .receipt-box {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ==========================================================================
    GLOBAL RESET & INITIAL BASE SETUP
    ========================================================================== */
 * {
@@ -1224,6 +1295,32 @@ input:focus, select:focus {
   background: rgba(255, 255, 255, 0.08);
   color: var(--primary);
   border-color: var(--primary-glow);
+}
+
+.btn-icon-only {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  flex-shrink: 0;
+}
+
+.btn-icon-only:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--primary);
+  border-color: var(--primary-glow);
+}
+
+[data-theme="light"] .btn-icon-only:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 /* Voice input button */

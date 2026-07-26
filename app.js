@@ -5,7 +5,11 @@
 document.addEventListener("DOMContentLoaded", async () => {
   // Initialize Database
   window.condoDb.initializeLocalDB();
-  
+
+  // Theme initialization (load saved preference)
+  const savedTheme = localStorage.getItem('CONDO_THEME') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
   // Element Selections
   const elements = {
     // Navigation Tabs
@@ -1528,6 +1532,26 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("receipt-image").src = "";
     }
   });
+
+  // ==========================================================================
+  // THEME TOGGLE
+  // ==========================================================================
+
+  const themeToggle = document.getElementById('btn-theme-toggle');
+  if (themeToggle) {
+    const themeIcon = themeToggle.querySelector('i');
+    const currentTheme = localStorage.getItem('CONDO_THEME') || 'dark';
+    themeIcon.className = currentTheme === 'light' ? 'bx bx-sun' : 'bx bx-moon';
+
+    themeToggle.addEventListener('click', () => {
+      const html = document.documentElement;
+      const isLight = html.getAttribute('data-theme') === 'light';
+      const newTheme = isLight ? 'dark' : 'light';
+      html.setAttribute('data-theme', newTheme);
+      themeIcon.className = newTheme === 'light' ? 'bx bx-sun' : 'bx bx-moon';
+      localStorage.setItem('CONDO_THEME', newTheme);
+    });
+  }
 
   // ==========================================================================
   // EXPORTAR PDF / RELATORIO MENSAL
