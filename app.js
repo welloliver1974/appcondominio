@@ -10,6 +10,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   const savedTheme = localStorage.getItem('CONDO_THEME') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
 
+  // App Name customization
+  function updateAppName(name) {
+    const defaultName = 'GestãoApp';
+    const appName = name || defaultName;
+    document.title = appName + ' - Administrador de Condomínio';
+    const logo = document.querySelector('.nav-logo span');
+    if (logo) {
+      logo.innerHTML = appName.replace('App', '<span class="accent-text">App</span>');
+      if (!appName.includes('App')) logo.textContent = appName;
+    }
+    const pinTitle = document.querySelector('.pin-unlock-header h2');
+    if (pinTitle) pinTitle.textContent = appName + ' Bloqueado';
+    const pwaText = document.querySelector('.pwa-install-content strong');
+    if (pwaText) pwaText.textContent = 'Instalar ' + appName;
+    localStorage.setItem('CONDO_APP_NAME', appName);
+  }
+  const savedAppName = localStorage.getItem('CONDO_APP_NAME');
+  if (savedAppName) updateAppName(savedAppName);
+
   // PIN protection
   let pinBuffer = [];
   const pinHash = localStorage.getItem('CONDO_PIN');
@@ -1481,6 +1500,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         pinStatusText.textContent = 'Proteção ativada';
       }
       showToast('success', 'PIN Salvo', 'PIN de proteção configurado com sucesso!');
+    });
+  }
+
+  // ==========================================================================
+  // APP NAME CONFIG
+  // ==========================================================================
+
+  const appNameInput = document.getElementById('app-name-input');
+  const btnSaveAppName = document.getElementById('btn-save-app-name');
+  if (appNameInput && btnSaveAppName) {
+    const current = localStorage.getItem('CONDO_APP_NAME');
+    if (current) appNameInput.value = current;
+    btnSaveAppName.addEventListener('click', () => {
+      const name = appNameInput.value.trim();
+      if (!name) { showToast('warning', 'Nome', 'Digite um nome para o aplicativo.'); return; }
+      updateAppName(name);
+      showToast('success', 'Nome Atualizado', 'O nome do app foi alterado para "' + name + '".');
     });
   }
 
