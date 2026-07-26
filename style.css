@@ -577,6 +577,33 @@ body {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.alert-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #25d366;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btn-whatsapp:hover {
+  background: #1da851;
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+}
+
 .alert-icon {
   font-size: 1.4rem;
   padding: 0.5rem;

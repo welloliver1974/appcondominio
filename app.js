@@ -297,15 +297,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       pendingUnits.forEach(u => {
         const alertItem = document.createElement("div");
         alertItem.className = "alert-item";
+        const pixKey = localStorage.getItem('CONDO_PIX_KEY') || '';
+        const monthName = todayDate.toLocaleDateString('pt-BR', { month: 'long' });
+        const whatsMsg = `Olá ${u.morador}, o condomínio do Apto ${u.apto} no valor de R$ ${u.valor.toFixed(2)} referente a ${monthName} está pendente.${pixKey ? `\n\nPix para pagamento: ${pixKey}` : ''}\n\nObrigado!`;
         alertItem.innerHTML = `
           <i class="bx bx-time-five alert-icon warning"></i>
           <div class="alert-content">
             <h4>Pendência: Apto ${u.apto}</h4>
             <p>${u.morador} - Condomínio de R$ ${u.valor.toFixed(2)} não identificado.</p>
           </div>
-          <button class="btn btn-secondary btn-sm btn-quick-pay" data-apto="${u.apto}" data-val="${u.valor}">
-            Receber
-          </button>
+          <div class="alert-actions">
+            <button class="btn btn-sm btn-whatsapp" data-phone="${u.telefone}" data-msg="${encodeURIComponent(whatsMsg)}">
+              <i class="bx bxl-whatsapp"></i>
+            </button>
+            <button class="btn btn-secondary btn-sm btn-quick-pay" data-apto="${u.apto}" data-val="${u.valor}">
+              Receber
+            </button>
+          </div>
         `;
         elements.dashboardAlerts.appendChild(alertItem);
       });
@@ -339,7 +347,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         btn.addEventListener("click", async () => {
           const apto = btn.getAttribute("data-apto");
           const val = parseFloat(btn.getAttribute("data-val"));
-          
+
           await window.condoDb.addTransaction({
             data: new Date().toISOString().split("T")[0],
             tipo: "receita",
@@ -350,6 +358,15 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
 
           updateDashboardData();
+        });
+      });
+
+      // WhatsApp cobrança buttons
+      document.querySelectorAll(".btn-whatsapp").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const phone = btn.getAttribute("data-phone") || '';
+          const msg = decodeURIComponent(btn.getAttribute("data-msg") || '');
+          openWhatsApp(phone, msg);
         });
       });
     }
@@ -1023,6 +1040,41 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       showToast('success', 'Valor Atualizado', `Taxa de condomínio definida como R$ ${value.toFixed(2)} para todas as unidades.`);
     });
+  }
+
+  // ==========================================================================
+  // PIX KEY CONFIG
+  // ==========================================================================
+
+  // Load saved pix key
+  const savedPixKey = localStorage.getItem('CONDO_PIX_KEY');
+  if (savedPixKey) {
+    const pixInput = document.getElementById('pix-key');
+    if (pixInput) pixInput.value = savedPixKey;
+  }
+
+  const pixForm = document.getElementById('pix-config-form');
+  if (pixForm) {
+    pixForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const key = document.getElementById('pix-key').value.trim();
+      localStorage.setItem('CONDO_PIX_KEY', key);
+      showToast('success', 'Pix Salvo', 'Chave Pix configurada com sucesso!');
+    });
+  }
+
+  // ==========================================================================
+  // WHATSAPP INTEGRATION
+  // ==========================================================================
+
+  function openWhatsApp(phone, message) {
+    // Strip non-digits from phone
+    const cleanPhone = phone.replace(/\D/g, '');
+    const encoded = encodeURIComponent(message);
+    const url = cleanPhone
+      ? `https://wa.me/55${cleanPhone}?text=${encoded}`
+      : `https://api.whatsapp.com/send?text=${encoded}`;
+    window.open(url, '_blank');
   }
 
   // ==========================================================================
