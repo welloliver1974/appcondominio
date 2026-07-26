@@ -73,8 +73,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // OK button fallback (also triggered on Enter key conceptually)
     okBtn.addEventListener('click', () => {
-      if (pinBuffer.length === 4) {
-        updatePinUI(); // triggers auto-verify
+      if (pinBuffer.length === 4) updatePinUI();
+    });
+
+    // Keyboard support
+    document.addEventListener('keydown', function pinKeyHandler(e) {
+      if (pinOverlay.classList.contains('hidden')) return;
+      if (e.key >= '0' && e.key <= '9') {
+        if (pinBuffer.length < 4) { pinBuffer.push(e.key); errorMsg.classList.add('hidden'); updatePinUI(); }
+      } else if (e.key === 'Backspace') {
+        pinBuffer = []; errorMsg.classList.add('hidden'); updatePinUI();
+      } else if (e.key === 'Enter') {
+        if (pinBuffer.length === 4) updatePinUI();
       }
     });
 
