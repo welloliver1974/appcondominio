@@ -1022,7 +1022,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             streamContent.textContent = response.message;
           }
         } catch (error) {
-          streamContent.innerHTML = "ðŸ¤– **Erro:** Não foi possível me conectar com o provedor de IA. Verifique as configurações (URL e API Key).";
+          streamContent.innerHTML = "🤖 **Erro:** Não foi possível me conectar com o provedor de IA. Verifique as configurações (URL e API Key).";
           streamMsgEl.querySelector(".stream-cursor")?.remove();
           console.error(error);
         }
@@ -1062,7 +1062,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     msg.className = "chat-msg system";
     msg.innerHTML = `
       <div class="msg-avatar"><i class="bx bxs-bot"></i></div>
-      <div class="msg-bubble">ðŸ¤– <em>Pensando...</em></div>
+      <div class="msg-bubble">🤖 <em>Pensando...</em></div>
     `;
     container.appendChild(msg);
     container.scrollTop = container.scrollHeight;
@@ -1474,7 +1474,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Low balance alert
     if (saldo < 100 && transactions.length > 0) {
-      new Notification("âš ï¸ Saldo em Caixa Baixo", {
+      new Notification("⚠️ Saldo em Caixa Baixo", {
         body: `O saldo atual é de R$ ${saldo.toFixed(2)}. Evite novos gastos.`,
         icon: "./icons/icon-192.png"
       });
@@ -1485,7 +1485,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Pending residents alert (only configured units with names)
     const pendentes = residents.filter(r => r.status_pagamento !== "pago" && r.morador);
     if (pendentes.length > 0) {
-      new Notification("ðŸ  Condomínio Pendente", {
+      new Notification("🏠 Condomínio Pendente", {
         body: `${pendentes.length} unidade(s) com pagamento pendente: ${pendentes.map(r => `Apto ${r.apto} (${r.morador})`).join(", ")}`,
         icon: "./icons/icon-192.png"
       });
@@ -1496,7 +1496,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Monthly bills not generated
     const monthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
     if (window.condoDb.getLastGeneratedMonth && window.condoDb.getLastGeneratedMonth() !== monthKey) {
-      new Notification("ðŸ“‹ Contas do Mês", {
+      new Notification("📋 Contas do Mês", {
         body: "As contas fixas deste mês ainda não foram geradas. Vá em Ajustes para gerar.",
         icon: "./icons/icon-192.png"
       });
