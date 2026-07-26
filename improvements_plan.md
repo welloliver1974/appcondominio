@@ -1,7 +1,8 @@
 # Plano de Melhorias — GestãoApp Condomínio
 
-> **Data:** 2026-07-25
+> **Data:** 2026-07-26
 > **Status:** 🎉 Todas as melhorias implementadas! Ver commits fc666f7..1cd5d24 e seguintes.
+> **Encoding fixes:** Commits `254a25a`, `e3c08a1`, `101e9c7` — corrigida dupla codificação UTF-8 em app.js (acentos, setas, emoji).
 
 ---
 
