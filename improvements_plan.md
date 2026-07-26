@@ -4,6 +4,8 @@
 > **Status:** 🎉 Todas as melhorias implementadas! Ver commits fc666f7..1cd5d24 e seguintes.
 > **Encoding fixes:** Commits `254a25a`, `e3c08a1`, `101e9c7` — corrigida dupla codificação UTF-8 em app.js (acentos, setas, emoji).
 > **Tema Claro/Escuro:** Commit `8a3b4db` — botão de alternância no header com persistência em localStorage.
+> **PIN Proteção + Projeção + Lixeira:** Commits `8874b10`, `...` — PIN de proteção, projeção financeira, lixeira/recuperar transações.
+> **Tema Claro/Escuro:** Commit `8a3b4db` — botão de alternância no header com persistência em localStorage.
 
 ---
 

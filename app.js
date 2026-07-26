@@ -359,6 +359,43 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
+    // Financial Projection
+    const projEl = (id) => document.getElementById(id);
+    if (projEl('proj-value-1')) {
+      const condoVal = parseFloat(localStorage.getItem('CONDO_DEFAULT_VALUE')) || 0;
+      const totalUnits = residents.length;
+      const pendentes = residents.filter(r => r.status_pagamento !== 'pago' && r.morador).length;
+      const expectedIncome = (totalUnits - pendentes) * condoVal;
+
+      // Get recurring bills
+      let monthlyExpenses = 0;
+      try {
+        const bills = window.condoDb.getRecurringBills ? window.condoDb.getRecurringBills() : [];
+        bills.forEach(b => { if (b.valor) monthlyExpenses += parseFloat(b.valor); });
+      } catch(e) {}
+
+      const monthlyDelta = expectedIncome - monthlyExpenses;
+      const saldoAtual = saldoCaixa;
+
+      for (let m = 1; m <= 3; m++) {
+        const projMonths = [];
+        for (let i = 0; i < m; i++) {
+          const mon = new Date(todayDate.getFullYear(), todayDate.getMonth() + i + 1);
+          projMonths.push(mon.toLocaleDateString('pt-BR', { month: 'short' }));
+        }
+        const projSaldo = saldoAtual + (monthlyDelta * m);
+        const projValEl = projEl('proj-value-' + m);
+        const projMonthEl = projEl('proj-month-' + m);
+        if (projValEl) {
+          projValEl.textContent = `R$ ${projSaldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+          projValEl.className = 'proj-value ' + (projSaldo >= 0 ? 'positive' : 'negative');
+        }
+        if (projMonthEl) {
+          projMonthEl.textContent = projMonths.join('/');
+        }
+      }
+    }
+
     // Alert systems
     generateDashboardAlerts(residents, saldoCaixa, transactions.length > 0);
 
@@ -1579,6 +1616,75 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (tab) {
         tab.insertBefore(form, tab.firstChild);
       }
+    });
+  }
+
+  // ==========================================================================
+  // TRASH / RESTORE ITEMS
+  // ==========================================================================
+
+  const btnTrash = document.getElementById('btn-toggle-trash');
+  const trashSection = document.getElementById('trash-section');
+  const trashList = document.getElementById('trash-transactions-list');
+  let showingTrash = false;
+
+  async function loadTrashItems() {
+    if (!trashList) return;
+    try {
+      const deleted = await window.condoDb.getDeletedTransactions();
+      if (!deleted || deleted.length === 0) {
+        trashList.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhum item na lixeira.</td></tr>';
+        return;
+      }
+      trashList.innerHTML = deleted.map(t => {
+        const delDate = t.deletedAt ? new Date(t.deletedAt).toLocaleDateString('pt-BR') : '—';
+        return `<tr>
+          <td>${new Date(t.data).toLocaleDateString('pt-BR')}</td>
+          <td><span class="badge ${t.tipo === 'receita' ? 'badge-success' : 'badge-danger'}">${t.tipo === 'receita' ? 'Receita' : 'Despesa'}</span></td>
+          <td>${t.categoria.replace('_', ' ')}</td>
+          <td>${t.descricao || '—'}</td>
+          <td style="color:${t.tipo === 'receita' ? 'var(--emerald)' : 'var(--rose)'}">R$ ${t.valor.toFixed(2)}</td>
+          <td>${delDate}</td>
+          <td class="table-actions">
+            <button class="btn btn-sm btn-icon-only btn-restore-trash" data-id="${t.id}" title="Restaurar"><i class="bx bx-refresh"></i></button>
+            <button class="btn btn-sm btn-icon-only btn-delete-perm" data-id="${t.id}" title="Excluir permanentemente"><i class="bx bx-x-circle" style="color:var(--rose);"></i></button>
+          </td>
+        </tr>`;
+      }).join('');
+
+      trashList.querySelectorAll('.btn-restore-trash').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          await window.condoDb.restoreTransaction(id);
+          showToast('success', 'Restaurado', 'Lançamento restaurado com sucesso!');
+          loadTrashItems();
+          updateDashboardData();
+          loadTransactionsList();
+        });
+      });
+
+      trashList.querySelectorAll('.btn-delete-perm').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          showConfirmModal('Excluir permanentemente este lançamento? Esta ação não pode ser desfeita.', async () => {
+            await window.condoDb.permanentlyDeleteTransaction(id);
+            showToast('info', 'Excluído', 'Lançamento removido permanentemente.');
+            loadTrashItems();
+            updateDashboardData();
+          });
+        });
+      });
+    } catch (e) {
+      console.error('Error loading trash:', e);
+    }
+  }
+
+  if (btnTrash && trashSection) {
+    btnTrash.addEventListener('click', () => {
+      showingTrash = !showingTrash;
+      trashSection.classList.toggle('hidden', !showingTrash);
+      btnTrash.classList.toggle('active', showingTrash);
+      if (showingTrash) loadTrashItems();
     });
   }
 

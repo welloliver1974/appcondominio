@@ -306,7 +306,8 @@ class CondoDatabase {
       }
     }
     const trans = JSON.parse(localStorage.getItem("CONDO_TRANSACTIONS"));
-    return trans.sort((a, b) => new Date(b.data) - new Date(a.data));
+    const filtered = trans.filter(t => !t.deleted);
+    return filtered.sort((a, b) => new Date(b.data) - new Date(a.data));
   }
 
   async addTransaction(transaction) {
@@ -346,15 +347,64 @@ class CondoDatabase {
 
   async deleteTransaction(id) {
     const transactions = JSON.parse(localStorage.getItem("CONDO_TRANSACTIONS"));
+    const tx = transactions.find(t => t.id === id);
+    if (tx) {
+      tx.deleted = true;
+      tx.deletedAt = new Date().toISOString();
+      localStorage.setItem("CONDO_TRANSACTIONS", JSON.stringify(transactions));
+
+      if (this.isTursoConnected) {
+        try {
+          await this.tursoClient.run("DELETE FROM transacoes WHERE id = ?", [id]);
+        } catch (e) {}
+      }
+    }
+  }
+
+  async getDeletedTransactions() {
+    this.initializeLocalDB();
+    const transactions = JSON.parse(localStorage.getItem("CONDO_TRANSACTIONS"));
+    const now = Date.now();
+    const trintaDias = 30 * 24 * 60 * 60 * 1000;
+    const active = transactions.filter(t => {
+      if (t.deleted && t.deletedAt) {
+        const age = now - new Date(t.deletedAt).getTime();
+        if (age > trintaDias) return false; // auto-purge
+      }
+      return true;
+    });
+    localStorage.setItem("CONDO_TRANSACTIONS", JSON.stringify(active));
+    return active.filter(t => t.deleted).sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+  }
+
+  async restoreTransaction(id) {
+    const transactions = JSON.parse(localStorage.getItem("CONDO_TRANSACTIONS"));
+    const tx = transactions.find(t => t.id === id);
+    if (tx) {
+      delete tx.deleted;
+      delete tx.deletedAt;
+      localStorage.setItem("CONDO_TRANSACTIONS", JSON.stringify(transactions));
+
+      if (this.isTursoConnected) {
+        try {
+          await this.tursoClient.run(
+            "INSERT OR IGNORE INTO transacoes (id, data, tipo, categoria, valor, descricao, apto_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [tx.id, tx.data, tx.tipo, tx.categoria, tx.valor, tx.descricao, tx.apto_id || null]
+          );
+        } catch (e) {}
+      }
+    }
+  }
+
+  async permanentlyDeleteTransaction(id) {
+    const transactions = JSON.parse(localStorage.getItem("CONDO_TRANSACTIONS"));
     const updated = transactions.filter(t => t.id !== id);
     localStorage.setItem("CONDO_TRANSACTIONS", JSON.stringify(updated));
 
     if (this.isTursoConnected) {
       try {
         await this.tursoClient.run("DELETE FROM transacoes WHERE id = ?", [id]);
-      } catch (e) {
-        console.error("Failed to delete transaction from Turso:", e);
-      }
+      } catch (e) {}
     }
   }
 

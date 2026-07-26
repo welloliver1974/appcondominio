@@ -1319,6 +1319,21 @@ input:focus, select:focus {
   border-color: var(--primary-glow);
 }
 
+.btn-icon-only.active {
+  color: var(--rose);
+  border-color: var(--rose-glow);
+  background: var(--rose-glow);
+}
+
+[data-theme="light"] .btn-icon-only.active {
+  background: rgba(244, 63, 94, 0.1);
+}
+
+.btn-restore-trash { background: var(--bg-secondary); border: 1px solid var(--border-light); color: var(--emerald); width: 32px; height: 32px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition-smooth); }
+.btn-restore-trash:hover { background: var(--emerald-glow); border-color: var(--emerald); }
+.btn-delete-perm { background: var(--bg-secondary); border: 1px solid var(--border-light); width: 32px; height: 32px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition-smooth); }
+.btn-delete-perm:hover { background: var(--rose-glow); border-color: var(--rose); }
+
 [data-theme="light"] .btn-icon-only:hover {
   background: rgba(0, 0, 0, 0.05);
 }

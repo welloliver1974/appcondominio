@@ -492,6 +492,9 @@
                   <option value="reserva">Reserva</option>
                   <option value="outro">Outros</option>
                 </select>
+                <button class="btn btn-sm btn-icon-only" id="btn-toggle-trash" title="Lixeira">
+                  <i class="bx bx-trash"></i>
+                </button>
               </div>
             </div>
             
@@ -510,6 +513,32 @@
                 </thead>
                 <tbody id="finances-transactions-list">
                   <!-- Dynamic content -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Trash / Deleted Items -->
+          <div class="glass-container mt-2 hidden" id="trash-section">
+            <div class="box-header">
+              <h2><i class="bx bx-trash"></i> Lixeira</h2>
+              <span class="text-muted" style="font-size:0.85rem;">Itens excluídos nos últimos 30 dias</span>
+            </div>
+            <div class="table-responsive mt-1">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Categoria</th>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                    <th>Excluído em</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="trash-transactions-list">
+                  <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhum item na lixeira.</td></tr>
                 </tbody>
               </table>
             </div>
