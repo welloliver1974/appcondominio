@@ -155,12 +155,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // DB Cloud Connection Indicator
   function updateDbStatusBadge() {
+    const mobileBadge = document.getElementById("db-status-mobile");
     if (window.condoDb.isTursoConnected) {
       elements.dbStatus.className = "db-status-badge online";
       elements.dbStatus.querySelector(".status-text").textContent = "Nuvem Conectada";
+      if (mobileBadge) {
+        mobileBadge.className = "db-status-mobile online";
+        mobileBadge.querySelector(".status-text").textContent = "Nuvem";
+      }
     } else {
       elements.dbStatus.className = "db-status-badge offline";
       elements.dbStatus.querySelector(".status-text").textContent = "Modo Local";
+      if (mobileBadge) {
+        mobileBadge.className = "db-status-mobile offline";
+        mobileBadge.querySelector(".status-text").textContent = "Local";
+      }
     }
   }
   updateDbStatusBadge();
@@ -625,6 +634,50 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // Share unit report
+  const btnShareReport = document.getElementById("btn-share-unit-report");
+  if (btnShareReport) {
+    btnShareReport.addEventListener("click", async () => {
+      const apto = elements.editResidentApto.value;
+      if (!apto || apto === "comum") {
+        showToast('info', 'Compartilhar', 'Funcionalidade disponível apenas para unidades residenciais.');
+        return;
+      }
+      const residents = await window.condoDb.getResidents();
+      const transactions = await window.condoDb.getTransactions();
+      const unit = residents.find(r => r.apto === apto);
+      if (!unit || !unit.morador) {
+        showToast('warning', 'Sem dados', 'Cadastre o morador primeiro.');
+        return;
+      }
+
+      const unitTrans = transactions.filter(t => t.apto_id === apto);
+      const totalPago = unitTrans.filter(t => t.tipo === "receita").reduce((s, t) => s + t.valor, 0);
+      const monthName = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+      let extrato = `*Extrato do Apto ${apto} - ${unit.morador}*\n`;
+      extrato += `📅 ${monthName}\n`;
+      extrato += `💵 Valor mensal: R$ ${unit.valor.toFixed(2)}\n`;
+      extrato += `📌 Status: ${unit.status_pagamento === "pago" ? "✅ Em dia" : "⏳ Pendente"}\n`;
+      extrato += `💰 Total pago: R$ ${totalPago.toFixed(2)}\n`;
+      if (unitTrans.length > 0) {
+        extrato += `\n*Últimos lançamentos:*\n`;
+        unitTrans.slice(0, 5).forEach(t => {
+          const sinal = t.tipo === "receita" ? "+" : "-";
+          extrato += `  ${t.data} ${sinal} R$ ${t.valor.toFixed(2)} - ${t.descricao}\n`;
+        });
+      }
+
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: `Extrato Apto ${apto}`, text: extrato });
+          return;
+        } catch (e) { /* user cancelled */ }
+      }
+      openWhatsApp(unit.telefone || '', extrato);
+    });
+  }
+
   // Resident Form submit
   if (elements.formResidentEdit) {
     elements.formResidentEdit.addEventListener("submit", async (e) => {
@@ -714,11 +767,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.querySelectorAll(".table-btn-delete").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-id");
-        if (confirm("Tem certeza que deseja excluir permanentemente este lanÃ§amento?")) {
+        showConfirmModal("Tem certeza que deseja excluir permanentemente este lançamento?", async () => {
           await window.condoDb.deleteTransaction(id);
           loadTransactionsList();
           updateDashboardData();
-        }
+        });
       });
     });
   }
@@ -916,9 +969,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             try {
               const jsonBlock = JSON.parse(jsonMatch[1]);
               if (jsonBlock.action === "addTransaction" && jsonBlock.payload) {
-                await window.condoDb.addTransaction(jsonBlock.payload);
+                const newTrans = await window.condoDb.addTransaction(jsonBlock.payload);
+                if (imagePayload) {
+                  localStorage.setItem(`CONDO_RECEIPT_${newTrans.id}`, imagePayload);
+                }
                 const cleanMessage = response.message.replace(/```json\s*[\s\S]*?\s*```/, "").trim();
-                streamContent.textContent = cleanMessage || "ðŸ¤– TransaÃ§Ã£o registrada com sucesso!";
+                streamContent.textContent = cleanMessage || "Transação registrada com sucesso!";
                 updateDashboardData();
               }
             } catch (e) {
@@ -1299,13 +1355,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       reader.onload = async (event) => {
         try {
           const parsed = JSON.parse(event.target.result);
-          if (confirm("Importar esse backup irÃ¡ sobrescrever seus dados atuais. Confirmar?")) {
+          showConfirmModal("Importar esse backup irá sobrescrever seus dados atuais. Confirmar?", () => {
             window.condoDb.importBackup(parsed);
-            alert("Backup importado com sucesso! Recarregando dados...");
-            location.reload();
-          }
+            showToast('success', 'Backup Restaurado', 'Backup importado com sucesso! Recarregando...');
+            setTimeout(() => location.reload(), 1500);
+          });
         } catch (err) {
-          alert("Arquivo invÃ¡lido. Certifique-se de que Ã© um JSON exportado do GestÃ£oApp.");
+          showToast('error', 'Erro', 'Arquivo inválido. Use um JSON exportado do GestãoApp.');
         }
       };
       reader.readAsText(file);
@@ -1315,11 +1371,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Reset local database
   if (elements.btnResetData) {
     elements.btnResetData.addEventListener("click", () => {
-      if (confirm("Tem certeza que deseja apagar TODOS os lanÃ§amentos e restaurar moradores padrÃ£o? Esta aÃ§Ã£o nÃ£o pode ser desfeita.")) {
+      showConfirmModal("Tem certeza que deseja apagar TODOS os lançamentos e restaurar moradores padrão? Esta ação não pode ser desfeita.", () => {
         window.condoDb.resetToDefault();
-        alert("ConfiguraÃ§Ãµes originais restauradas!");
-        location.reload();
-      }
+        showToast('success', 'Restaurado', 'Configurações originais restauradas!');
+        setTimeout(() => location.reload(), 1500);
+      });
     });
   }
 
@@ -1422,7 +1478,48 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Run notification check after dashboard loads
   setTimeout(checkAndNotify, 2000);
+
+  // Receipt lightbox close
+  document.getElementById("btn-close-receipt")?.addEventListener("click", () => {
+    document.getElementById("receipt-lightbox")?.classList.add("hidden");
+    document.getElementById("receipt-image").src = "";
+  });
+  document.getElementById("receipt-lightbox")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) {
+      e.currentTarget.classList.add("hidden");
+      document.getElementById("receipt-image").src = "";
+    }
+  });
 });
+
+  // ==========================================================================
+  // CONFIRM MODAL UTILITY
+  // ==========================================================================
+
+  function showConfirmModal(message, onConfirm) {
+    const modal = document.getElementById('modal-confirm');
+    const msgEl = document.getElementById('modal-confirm-message');
+    const confirmBtn = document.getElementById('btn-modal-confirm');
+    const cancelBtn = document.getElementById('btn-modal-cancel');
+    if (!modal || !msgEl || !confirmBtn || !cancelBtn) return;
+
+    msgEl.textContent = message;
+    modal.classList.remove('hidden');
+
+    function cleanup() {
+      modal.classList.add('hidden');
+      confirmBtn.removeEventListener('click', handleConfirm);
+      cancelBtn.removeEventListener('click', cleanup);
+    }
+
+    function handleConfirm() {
+      cleanup();
+      onConfirm();
+    }
+
+    confirmBtn.addEventListener('click', handleConfirm);
+    cancelBtn.addEventListener('click', cleanup);
+  }
 
   // ==========================================================================
   // TOAST NOTIFICATION UTILITY

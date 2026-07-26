@@ -93,6 +93,10 @@
           <p id="current-date-text">Carregando informações do dia...</p>
         </div>
         <div class="header-actions">
+          <span class="db-status-mobile hidden" id="db-status-mobile">
+            <span class="indicator"></span>
+            <span class="status-text">Modo Local</span>
+          </span>
           <button class="btn btn-primary" id="btn-quick-transaction">
             <i class="bx bx-plus"></i> Novo Lançamento
           </button>
@@ -316,7 +320,12 @@
               <h2 id="detail-unit-title">Unidade 101</h2>
               <span class="badge" id="detail-unit-status">Pendente</span>
             </div>
-            <button class="btn-close" id="btn-close-unit-detail"><i class="bx bx-x"></i></button>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <button class="btn btn-secondary btn-sm" id="btn-share-unit-report" title="Compartilhar extrato">
+                <i class="bx bx-share-alt"></i>
+              </button>
+              <button class="btn-close" id="btn-close-unit-detail"><i class="bx bx-x"></i></button>
+            </div>
           </div>
           
           <div class="unit-detail-grid">
@@ -709,6 +718,35 @@
       <div class="modal-body mt-1">
         <!-- Render copy of form or use direct js binding -->
         <div id="modal-form-placeholder"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP MODAL: RECEIPT LIGHTBOX -->
+  <div class="modal-overlay hidden" id="receipt-lightbox">
+    <div class="glass-container modal-box receipt-box">
+      <div class="box-header">
+        <h2>📄 Comprovante</h2>
+        <button class="btn-close" id="btn-close-receipt"><i class="bx bx-x"></i></button>
+      </div>
+      <div class="receipt-image-wrapper">
+        <img id="receipt-image" src="" alt="Comprovante">
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP MODAL: CONFIRM DIALOG -->
+  <div class="modal-overlay hidden" id="modal-confirm">
+    <div class="glass-container modal-box modal-confirm-box">
+      <div class="box-header">
+        <h2 id="modal-confirm-title">Confirmação</h2>
+      </div>
+      <div class="modal-body">
+        <p id="modal-confirm-message" class="confirm-message">Tem certeza?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-modal-cancel"><i class="bx bx-x"></i> Cancelar</button>
+        <button class="btn btn-danger" id="btn-modal-confirm"><i class="bx bx-check"></i> Confirmar</button>
       </div>
     </div>
   </div>
