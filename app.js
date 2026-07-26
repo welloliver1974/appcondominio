@@ -1,5 +1,5 @@
 /**
- * GestÃ£oApp - Main Application Controller
+ * GestãoApp - Main Application Controller
  */
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -223,12 +223,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     elements.valReceitasMes.textContent = `R$ ${monthReceitasVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-    elements.valReceitasCount.textContent = `${receitasCount} entrada(s) este mÃªs`;
+    elements.valReceitasCount.textContent = `${receitasCount} entrada(s) este mês`;
     
     elements.valDespesasMes.textContent = `R$ ${monthDespesasVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-    elements.valDespesasCount.textContent = `${despesasCount} saÃ­da(s) este mÃªs`;
+    elements.valDespesasCount.textContent = `${despesasCount} saída(s) este mês`;
 
-    // Monthly Summary (Resumo do MÃªs)
+    // Monthly Summary (Resumo do Mês)
     const summaryEl = (id) => document.getElementById(id);
     const mesSaldo = monthReceitasVal - monthDespesasVal;
     const totalCondominios = residents.length;
@@ -349,12 +349,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         alertItem.className = "alert-item";
         const pixKey = localStorage.getItem('CONDO_PIX_KEY') || '';
         const monthName = todayDate.toLocaleDateString('pt-BR', { month: 'long' });
-        const whatsMsg = `OlÃ¡ ${u.morador}, o condomÃ­nio do Apto ${u.apto} no valor de R$ ${u.valor.toFixed(2)} referente a ${monthName} estÃ¡ pendente.${pixKey ? `\n\nPix para pagamento: ${pixKey}` : ''}\n\nObrigado!`;
+        const whatsMsg = `Olá ${u.morador}, o condomínio do Apto ${u.apto} no valor de R$ ${u.valor.toFixed(2)} referente a ${monthName} está pendente.${pixKey ? `\n\nPix para pagamento: ${pixKey}` : ''}\n\nObrigado!`;
         alertItem.innerHTML = `
           <i class="bx bx-time-five alert-icon warning"></i>
           <div class="alert-content">
-            <h4>PendÃªncia: Apto ${u.apto}</h4>
-            <p>${u.morador} - CondomÃ­nio de R$ ${u.valor.toFixed(2)} nÃ£o identificado.</p>
+            <h4>Pendência: Apto ${u.apto}</h4>
+            <p>${u.morador} - Condomínio de R$ ${u.valor.toFixed(2)} não identificado.</p>
           </div>
           <div class="alert-actions">
             <button class="btn btn-sm btn-whatsapp" data-phone="${u.telefone}" data-msg="${encodeURIComponent(whatsMsg)}">
@@ -388,7 +388,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       elements.dashboardAlerts.innerHTML = `
         <div class="alert-empty-state">
           <i class="bx bx-badge-check"></i>
-          <p>Tudo sob controle! Sem pendÃªncias urgentes.</p>
+          <p>Tudo sob controle! Sem pendências urgentes.</p>
         </div>
       `;
     } else {
@@ -403,7 +403,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             tipo: "receita",
             categoria: "condominio",
             valor: val,
-            descricao: `Pagamento mensal do condomÃ­nio do Apto ${apto}`,
+            descricao: `Pagamento mensal do condomínio do Apto ${apto}`,
             apto_id: apto
           });
 
@@ -411,7 +411,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
       });
 
-      // WhatsApp cobranÃ§a buttons
+      // WhatsApp cobrança buttons
       document.querySelectorAll(".btn-whatsapp").forEach(btn => {
         btn.addEventListener("click", () => {
           const phone = btn.getAttribute("data-phone") || '';
@@ -430,7 +430,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const recent = transactions.slice(0, 5);
     
     if (recent.length === 0) {
-      listContainer.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Nenhum lanÃ§amento registrado.</td></tr>`;
+      listContainer.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Nenhum lançamento registrado.</td></tr>`;
       return;
     }
 
@@ -581,7 +581,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         nameEl.textContent = res.morador || "Sem morador registrado";
         
         if (res.status_pagamento === "pago") {
-          statusEl.innerHTML = `<span class="badge badge-success"><i class="bx bx-check-circle"></i> CondomÃ­nio Pago</span>`;
+          statusEl.innerHTML = `<span class="badge badge-success"><i class="bx bx-check-circle"></i> Condomínio Pago</span>`;
         } else {
           statusEl.innerHTML = `<span class="badge badge-warning"><i class="bx bx-time-five"></i> Pendente</span>`;
         }
@@ -593,7 +593,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (commonCard) {
       const repairs = transactions.filter(t => t.apto_id === "comum" && t.categoria === "conserto");
       document.getElementById("status-pag-comum").innerHTML = `
-        <span class="badge badge-info"><i class="bx bx-wrench"></i> ${repairs.length} ManutenÃ§Ãµes Registradas</span>
+        <span class="badge badge-info"><i class="bx bx-wrench"></i> ${repairs.length} Manutenções Registradas</span>
       `;
     }
   }
@@ -609,19 +609,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // Load details section
       elements.apartmentDetailsSection.classList.remove("hidden");
-      elements.detailUnitTitle.textContent = apto === "comum" ? "Ãrea Comum" : `Unidade ${apto}`;
+      elements.detailUnitTitle.textContent = apto === "comum" ? "Área Comum" : `Unidade ${apto}`;
       
       const residents = await window.condoDb.getResidents();
       const unitRes = residents.find(r => r.apto === apto);
 
       if (apto === "comum") {
-        elements.editResidentName.value = "AdministraÃ§Ã£o PrÃ©dio";
+        elements.editResidentName.value = "Administração Prédio";
         elements.editResidentPhone.value = "N/A";
         elements.editResidentValue.value = "0";
         elements.editResidentName.disabled = true;
         elements.editResidentPhone.disabled = true;
         elements.editResidentValue.disabled = true;
-        elements.detailUnitStatus.innerHTML = `<span class="badge badge-info"><i class="bx bx-building"></i> Ãrea Geral</span>`;
+        elements.detailUnitStatus.innerHTML = `<span class="badge badge-info"><i class="bx bx-building"></i> Área Geral</span>`;
       } else {
         elements.editResidentName.disabled = false;
         elements.editResidentPhone.disabled = false;
@@ -633,7 +633,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         elements.editResidentApto.value = apto;
 
         if (unitRes && unitRes.status_pagamento === "pago") {
-          elements.detailUnitStatus.innerHTML = `<span class="badge badge-success"><i class="bx bx-check-circle"></i> CondomÃ­nio Pago</span>`;
+          elements.detailUnitStatus.innerHTML = `<span class="badge badge-success"><i class="bx bx-check-circle"></i> Condomínio Pago</span>`;
         } else {
           elements.detailUnitStatus.innerHTML = `<span class="badge badge-warning"><i class="bx bx-time-five"></i> Pagamento Pendente</span>`;
         }
@@ -646,7 +646,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       listContainer.innerHTML = "";
 
       if (unitTrans.length === 0) {
-        listContainer.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem 0;">Sem lanÃ§amentos vinculados a esta unidade.</td></tr>`;
+        listContainer.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem 0;">Sem lançamentos vinculados a esta unidade.</td></tr>`;
       } else {
         unitTrans.forEach(t => {
           const tr = document.createElement("tr");
@@ -731,7 +731,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Update Detail UI status
       elements.apartmentDetailsSection.classList.add("hidden");
       elements.apartmentCards.forEach(c => c.classList.remove("active"));
-      showToast('success', 'AtualizaÃ§Ã£o', `InformaÃ§Ãµes do Apto ${apto} atualizadas com sucesso!`);
+      showToast('success', 'Atualização', `Informações do Apto ${apto} atualizadas com sucesso!`);
     });
   }
 
@@ -753,7 +753,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     if (filtered.length === 0) {
-      listContainer.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem 0;">Nenhum lanÃ§amento corresponde aos filtros.</td></tr>`;
+      listContainer.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem 0;">Nenhum lançamento corresponde aos filtros.</td></tr>`;
       return;
     }
 
@@ -924,7 +924,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           voiceBtn.classList.add("recording");
           voiceBtn.title = "Clique para parar";
         } catch (e) {
-          showToast('warning', 'Voz', 'NÃ£o foi possÃ­vel iniciar o microfone.');
+          showToast('warning', 'Voz', 'Não foi possível iniciar o microfone.');
         }
       });
 
@@ -945,7 +945,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       recognition.onerror = (event) => {
         console.warn("Speech error:", event.error);
         if (event.error === "no-speech" || event.error === "aborted") return;
-        showToast('warning', 'Voz', 'NÃ£o entendi. Tente falar mais claro ou digitar.');
+        showToast('warning', 'Voz', 'Não entendi. Tente falar mais claro ou digitar.');
       };
 
       recognition.onend = () => {
@@ -956,7 +956,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       // Speech not supported fallback
       voiceBtn.style.opacity = "0.3";
-      voiceBtn.title = "Voz nÃ£o disponÃ­vel neste navegador";
+      voiceBtn.title = "Voz não disponível neste navegador";
     }
   }
 
@@ -1022,7 +1022,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             streamContent.textContent = response.message;
           }
         } catch (error) {
-          streamContent.innerHTML = "ðŸ¤– **Erro:** NÃ£o foi possÃ­vel me conectar com o provedor de IA. Verifique as configuraÃ§Ãµes (URL e API Key).";
+          streamContent.innerHTML = "ðŸ¤– **Erro:** Não foi possível me conectar com o provedor de IA. Verifique as configurações (URL e API Key).";
           streamMsgEl.querySelector(".stream-cursor")?.remove();
           console.error(error);
         }
@@ -1086,7 +1086,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const token = elements.tursoToken.value.trim();
 
       if (!url || !token) {
-        showToast('warning', 'Campos obrigatÃ³rios', 'Preencha a URL e o Token do Turso.');
+        showToast('warning', 'Campos obrigatórios', 'Preencha a URL e o Token do Turso.');
         return;
       }
 
@@ -1099,7 +1099,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         showToast('success', 'Turso Conectado!', 'Seus dados foram sincronizados com o banco na nuvem.');
         updateDashboardData();
       } catch (err) {
-        showToast('error', 'Erro de ConexÃ£o', err.message);
+        showToast('error', 'Erro de Conexão', err.message);
       } finally {
         elements.btnSaveTurso.innerHTML = '<i class="bx bx-link"></i> Salvar & Conectar';
         elements.btnSaveTurso.disabled = false;
@@ -1136,7 +1136,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       localStorage.setItem('llm_model', model);
       localStorage.setItem('llm_key', key);
       
-      showToast('success', 'IA Configurada', 'As configuraÃ§Ãµes do provedor LLM foram salvas.');
+      showToast('success', 'IA Configurada', 'As configurações do provedor LLM foram salvas.');
     });
   }
 
@@ -1155,7 +1155,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       e.preventDefault();
       const value = parseFloat(elements.defaultCondoValue.value);
       if (!value || value <= 0) {
-        showToast('warning', 'Valor invÃ¡lido', 'Digite um valor maior que zero.');
+        showToast('warning', 'Valor inválido', 'Digite um valor maior que zero.');
         return;
       }
 
@@ -1167,7 +1167,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       residents.forEach(r => { r.valor = value; });
       localStorage.setItem('CONDO_RESIDENTS', JSON.stringify(residents));
 
-      showToast('success', 'Valor Atualizado', `Taxa de condomÃ­nio definida como R$ ${value.toFixed(2)} para todas as unidades.`);
+      showToast('success', 'Valor Atualizado', `Taxa de condomínio definida como R$ ${value.toFixed(2)} para todas as unidades.`);
     });
   }
 
@@ -1222,7 +1222,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <div class="form-group col-3">
             <label>Categoria</label>
             <select class="bill-category form-control-sm" data-index="${index}">
-              <option value="agua" ${bill.categoria === 'agua' ? 'selected' : ''}>Ãgua</option>
+              <option value="agua" ${bill.categoria === 'agua' ? 'selected' : ''}>Água</option>
               <option value="luz" ${bill.categoria === 'luz' ? 'selected' : ''}>Luz</option>
               <option value="limpeza" ${bill.categoria === 'limpeza' ? 'selected' : ''}>Limpeza</option>
               <option value="conserto" ${bill.categoria === 'conserto' ? 'selected' : ''}>Conserto</option>
@@ -1230,12 +1230,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             </select>
           </div>
           <div class="form-group col-3">
-            <label>DescriÃ§Ã£o</label>
-            <input type="text" class="bill-desc form-control-sm" value="${bill.descricao}" data-index="${index}" placeholder="Ex: Conta de Ãgua">
+            <label>Descrição</label>
+            <input type="text" class="bill-desc form-control-sm" value="${bill.descricao}" data-index="${index}" placeholder="Ex: Conta de Água">
           </div>
           <div class="form-group col-3">
             <label>Valor Fixo (R$)</label>
-            <input type="number" step="0.01" class="bill-value form-control-sm" value="${bill.valor || ''}" data-index="${index}" placeholder="VariÃ¡vel">
+            <input type="number" step="0.01" class="bill-value form-control-sm" value="${bill.valor || ''}" data-index="${index}" placeholder="Variável">
           </div>
           <div class="form-group col-3">
             <label>Dia Vencimento</label>
@@ -1281,7 +1281,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (lastGen === monthKey) {
       const monthName = today.toLocaleDateString('pt-BR', { month: 'long' });
-      statusEl.textContent = `âœ… Contas de ${monthName} jÃ¡ geradas`;
+      statusEl.textContent = `âœ… Contas de ${monthName} já geradas`;
       statusEl.className = "badge badge-success";
       statusEl.style.display = "inline-flex";
       btnGen.disabled = true;
@@ -1289,7 +1289,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       statusEl.style.display = "none";
       btnGen.disabled = false;
-      btnGen.innerHTML = '<i class="bx bx-calendar-check"></i> Gerar Contas deste MÃªs';
+      btnGen.innerHTML = '<i class="bx bx-calendar-check"></i> Gerar Contas deste Mês';
     }
   }
 
@@ -1309,18 +1309,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         const count = await window.condoDb.generateMonthlyBills();
         if (count > 0) {
-          showToast('success', 'Contas Geradas!', `${count} conta(s) fixa(s) foram criadas para este mÃªs.`);
+          showToast('success', 'Contas Geradas!', `${count} conta(s) fixa(s) foram criadas para este mês.`);
           updateDashboardData();
         } else {
-          showToast('info', 'MÃªs jÃ¡ Gerado', 'As contas deste mÃªs jÃ¡ foram geradas anteriormente.');
+          showToast('info', 'Mês já Gerado', 'As contas deste mês já foram geradas anteriormente.');
         }
         updateMonthlyBillsUI();
       } catch (err) {
-        showToast('error', 'Erro', 'NÃ£o foi possÃ­vel gerar as contas do mÃªs.');
+        showToast('error', 'Erro', 'Não foi possível gerar as contas do mês.');
         console.error(err);
       } finally {
         btnGenBills.disabled = false;
-        btnGenBills.innerHTML = '<i class="bx bx-calendar-check"></i> Gerar Contas deste MÃªs';
+        btnGenBills.innerHTML = '<i class="bx bx-calendar-check"></i> Gerar Contas deste Mês';
       }
     });
   }
@@ -1348,8 +1348,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         alertItem.innerHTML = `
           <i class="bx bx-calendar-exclamation alert-icon warning" style="color: var(--cyan); background: var(--cyan-glow)"></i>
           <div class="alert-content">
-            <h4>Contas do MÃªs</h4>
-            <p>As contas fixas de ${today.toLocaleDateString('pt-BR', { month: 'long' })} ainda nÃ£o foram geradas.</p>
+            <h4>Contas do Mês</h4>
+            <p>As contas fixas de ${today.toLocaleDateString('pt-BR', { month: 'long' })} ainda não foram geradas.</p>
           </div>
           <button class="btn btn-primary btn-sm" id="btn-gen-bills-from-dash">
             <i class="bx bx-calendar-check"></i> Gerar Agora
@@ -1360,7 +1360,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("btn-gen-bills-from-dash")?.addEventListener("click", async () => {
           await window.condoDb.generateMonthlyBills();
           updateDashboardData();
-          showToast('success', 'Contas Geradas!', 'Contas fixas do mÃªs registradas com sucesso.');
+          showToast('success', 'Contas Geradas!', 'Contas fixas do mês registradas com sucesso.');
         });
       }
     }
@@ -1475,7 +1475,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Low balance alert
     if (saldo < 100 && transactions.length > 0) {
       new Notification("âš ï¸ Saldo em Caixa Baixo", {
-        body: `O saldo atual Ã© de R$ ${saldo.toFixed(2)}. Evite novos gastos.`,
+        body: `O saldo atual é de R$ ${saldo.toFixed(2)}. Evite novos gastos.`,
         icon: "./icons/icon-192.png"
       });
       notifiedThisSession = true;
@@ -1485,7 +1485,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Pending residents alert (only configured units with names)
     const pendentes = residents.filter(r => r.status_pagamento !== "pago" && r.morador);
     if (pendentes.length > 0) {
-      new Notification("ðŸ  CondomÃ­nio Pendente", {
+      new Notification("ðŸ  Condomínio Pendente", {
         body: `${pendentes.length} unidade(s) com pagamento pendente: ${pendentes.map(r => `Apto ${r.apto} (${r.morador})`).join(", ")}`,
         icon: "./icons/icon-192.png"
       });
@@ -1496,8 +1496,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Monthly bills not generated
     const monthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
     if (window.condoDb.getLastGeneratedMonth && window.condoDb.getLastGeneratedMonth() !== monthKey) {
-      new Notification("ðŸ“‹ Contas do MÃªs", {
-        body: "As contas fixas deste mÃªs ainda nÃ£o foram geradas. VÃ¡ em Ajustes para gerar.",
+      new Notification("ðŸ“‹ Contas do Mês", {
+        body: "As contas fixas deste mês ainda não foram geradas. Vá em Ajustes para gerar.",
         icon: "./icons/icon-192.png"
       });
       notifiedThisSession = true;
