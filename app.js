@@ -271,13 +271,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       const vsEl = summaryEl("summary-vs-mes-passado");
 
       if (prevSaldo === 0 && mesSaldo === 0) {
-        vsEl.textContent = "â€”";
+        vsEl.textContent = "—";
       } else if (prevSaldo === 0) {
-        vsEl.textContent = "â†— Novo";
+        vsEl.textContent = "↗ Novo";
         vsEl.style.color = "var(--emerald)";
       } else {
         const pct = ((diff / Math.abs(prevSaldo)) * 100).toFixed(1);
-        const arrow = diff >= 0 ? "â†—" : "â†˜";
+        const arrow = diff >= 0 ? "↗" : "↘";
         const color = diff >= 0 ? "var(--emerald)" : "var(--rose)";
         vsEl.textContent = `${arrow} ${pct}%`;
         vsEl.style.color = color;
