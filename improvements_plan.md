@@ -1,8 +1,18 @@
 # Plano de Melhorias — GestãoApp Condomínio
 
 > **Data:** 2026-07-26
-> **Status:** 🎉 Todas as melhorias implementadas! Ver commits fc666f7..1cd5d24 e seguintes.
-> **Encoding fixes:** Commits `254a25a`, `e3c08a1`, `101e9c7` — corrigida dupla codificação UTF-8 em app.js (acentos, setas, emoji).
+> **Status:** 🎉 Todas as melhorias implementadas até o momento.
+>
+> **Histórico de Commits:**
+> - `254a25a`, `e3c08a1`, `101e9c7` — Correção de encoding UTF-8 (acentos, setas, emoji)
+> - `8a3b4db`, `5f1e3f1` — Tema claro/escuro com toggle e persistência
+> - `8874b10` — PIN de proteção + Projeção financeira
+> - `265082e` — Lixeira / Recuperar transações
+> - `bfb41a4` — Fix PIN (auto-verificar ao digitar)
+> - `f4fe11e` — Botão bloquear + Calendário de pagamentos
+> - `d84349c` — Alinhamento dos botões no header
+> - `5ec3d94` — Backup automático + Lembretes customizados
+> - `34f63b9` — Suporte a teclado no desbloqueio PIN
 > **Tema Claro/Escuro:** Commit `8a3b4db` — botão de alternância no header com persistência em localStorage.
 > **PIN Proteção + Projeção + Lixeira:** Commits `8874b10`, `265082e` — PIN de proteção, projeção financeira, lixeira/recuperar transações.
 > **Tema Claro/Escuro:** Commit `8a3b4db` — botão de alternância no header com persistência em localStorage.
