@@ -34,10 +34,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       pinDots.forEach((dot, i) => {
         dot.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
       });
+      // Auto-verify when 4 digits entered
       if (pinBuffer.length === 4) {
-        okBtn.classList.remove('hidden');
-      } else {
-        okBtn.classList.add('hidden');
+        const entered = pinBuffer.join('');
+        if (simpleHash(entered) === pinHash) {
+          window._pinUnlock();
+        } else {
+          errorMsg.classList.remove('hidden');
+          pinDots.forEach(d => d.classList.add('error'));
+          setTimeout(() => pinDots.forEach(d => d.classList.remove('error')), 500);
+          pinBuffer = [];
+          setTimeout(() => updatePinUI(), 500);
+        }
       }
     }
 
@@ -55,26 +63,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           updatePinUI();
           return;
         }
-        if (val === 'ok') {
-          const entered = pinBuffer.join('');
-          errorMsg.classList.add('hidden');
-          if (simpleHash(entered) === pinHash) {
-            window._pinUnlock();
-          } else {
-            errorMsg.classList.remove('hidden');
-            pinDots.forEach(d => d.classList.add('error'));
-            setTimeout(() => pinDots.forEach(d => d.classList.remove('error')), 500);
-            pinBuffer = [];
-            updatePinUI();
-          }
-          return;
-        }
         if (pinBuffer.length < 4 && /^\d$/.test(val)) {
           pinBuffer.push(val);
           errorMsg.classList.add('hidden');
           updatePinUI();
         }
       });
+    });
+
+    // OK button fallback (also triggered on Enter key conceptually)
+    okBtn.addEventListener('click', () => {
+      if (pinBuffer.length === 4) {
+        updatePinUI(); // triggers auto-verify
+      }
     });
 
     pinOverlay.classList.remove('hidden');
