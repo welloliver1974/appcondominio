@@ -100,6 +100,9 @@
           <button class="btn btn-icon-only" id="btn-theme-toggle" title="Alternar tema claro/escuro">
             <i class='bx bx-moon'></i>
           </button>
+          <button class="btn btn-icon-only hidden" id="btn-lock-app" title="Bloquear o app">
+            <i class='bx bx-lock-alt'></i>
+          </button>
           <button class="btn btn-secondary btn-sm" id="btn-export-pdf" title="Exportar relatório mensal em PDF">
             <i class='bx bx-file'></i> PDF
           </button>
@@ -240,6 +243,25 @@
               <span class="proj-value" id="proj-value-3">R$ 0,00</span>
               <span class="proj-desc">Saldo projetado</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Payment Calendar -->
+        <div class="glass-container mt-2" id="payment-calendar-card">
+          <div class="box-header">
+            <h2>📅 Calendário de Pagamentos</h2>
+            <span class="text-muted" style="font-size:0.85rem;" id="cal-month-label">Carregando...</span>
+          </div>
+          <div class="cal-weekdays">
+            <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+          </div>
+          <div class="cal-grid" id="cal-grid">
+            <!-- Calendar days rendered by JS -->
+          </div>
+          <div class="cal-legend">
+            <span><span class="cal-dot" style="background:var(--emerald);"></span> Pago</span>
+            <span><span class="cal-dot" style="background:var(--amber);"></span> Pendente</span>
+            <span><span class="cal-dot" style="background:var(--rose);"></span> Vencido</span>
           </div>
         </div>
 

@@ -1938,6 +1938,100 @@ input:focus, select:focus {
 }
 
 /* ==========================================================================
+   PAYMENT CALENDAR
+   ========================================================================== */
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 0 0.25rem;
+  gap: 2px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 0.25rem 0;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  position: relative;
+  cursor: default;
+  transition: var(--transition-smooth);
+  min-height: 44px;
+}
+
+.cal-day.has-bill {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.cal-day.paid {
+  background: var(--emerald-glow);
+  color: var(--emerald);
+}
+
+.cal-day.pending {
+  background: var(--amber-glow);
+  color: var(--amber);
+}
+
+.cal-day.overdue {
+  background: var(--rose-glow);
+  color: var(--rose);
+}
+
+.cal-day.today {
+  border: 2px solid var(--primary);
+  font-weight: 700;
+}
+
+.cal-day.other-month {
+  opacity: 0.2;
+}
+
+.cal-day .cal-badge {
+  font-size: 0.55rem;
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.cal-legend {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.cal-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
    PIN UNLOCK OVERLAY
    ========================================================================== */
 .pin-overlay {

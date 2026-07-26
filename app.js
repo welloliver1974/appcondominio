@@ -82,6 +82,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.body.style.overflow = 'hidden';
   }
 
+  // Lock button (re-lock the app without reloading)
+  const lockBtn = document.getElementById('btn-lock-app');
+  if (lockBtn) {
+    if (pinHash && pinEnabled) {
+      lockBtn.classList.remove('hidden');
+    }
+    lockBtn.addEventListener('click', () => {
+      const overlay = document.getElementById('pin-unlock-overlay');
+      if (!overlay) return;
+      pinBuffer = [];
+      const dots = [0,1,2,3].map(i => document.getElementById('pin-dot-' + i));
+      dots.forEach(d => d.className = 'pin-dot');
+      document.getElementById('pin-error-msg')?.classList.add('hidden');
+      overlay.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+
   // Element Selections
   const elements = {
     // Navigation Tabs
@@ -395,6 +413,75 @@ document.addEventListener("DOMContentLoaded", async () => {
           projMonthEl.textContent = projMonths.join('/');
         }
       }
+    }
+
+    // Payment Calendar
+    const calGrid = document.getElementById('cal-grid');
+    const calLabel = document.getElementById('cal-month-label');
+    if (calGrid && calLabel) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      calLabel.textContent = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = now.getDate();
+
+      // Build due-date map from recurring bills
+      const dueMap = {};
+      try {
+        const bills = window.condoDb.getRecurringBills ? window.condoDb.getRecurringBills() : [];
+        bills.forEach(b => {
+          const day = parseInt(b.dia_vencimento);
+          if (day && day <= daysInMonth) {
+            if (!dueMap[day]) dueMap[day] = [];
+            dueMap[day].push(b);
+          }
+        });
+      } catch(e) {}
+
+      // Mark paid days
+      const paidDays = {};
+      transactions.forEach(t => {
+        const tDate = new Date(t.data);
+        if (tDate.getMonth() === month && tDate.getFullYear() === year && t.tipo === 'despesa') {
+          paidDays[tDate.getDate()] = (paidDays[tDate.getDate()] || 0) + t.valor;
+        }
+      });
+
+      // Build calendar HTML
+      let html = '';
+      const todayMs = Date.now();
+      const dayMs = 86400000;
+
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div class="cal-day other-month"></div>';
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const hasDue = dueMap[d];
+        const paidVal = paidDays[d];
+        const dueDate = new Date(year, month, d);
+        const isOverdue = hasDue && !paidVal && dueDate.getTime() + dayMs < todayMs;
+        const isToday = d === today;
+
+        let cls = 'cal-day';
+        if (isToday) cls += ' today';
+        if (isOverdue) cls += ' overdue';
+        else if (paidVal) cls += ' paid';
+        else if (hasDue) cls += ' pending';
+
+        if (hasDue || paidVal) cls += ' has-bill';
+
+        let badge = '';
+        if (paidVal) badge = `<span class="cal-badge">R$ ${paidVal.toFixed(0)}</span>`;
+        else if (hasDue) badge = `<span class="cal-badge">${hasDue.length}</span>`;
+
+        html += `<div class="${cls}">${d}${badge}</div>`;
+      }
+
+      calGrid.innerHTML = html;
     }
 
     // Alert systems
