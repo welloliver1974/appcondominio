@@ -10,6 +10,77 @@ document.addEventListener("DOMContentLoaded", async () => {
   const savedTheme = localStorage.getItem('CONDO_THEME') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
 
+  // PIN protection
+  let pinBuffer = [];
+  const pinHash = localStorage.getItem('CONDO_PIN');
+  const pinEnabled = localStorage.getItem('CONDO_PIN_ENABLED') === 'true';
+
+  if (pinHash && pinEnabled) {
+    const pinOverlay = document.getElementById('pin-unlock-overlay');
+    const pinDots = [0,1,2,3].map(i => document.getElementById('pin-dot-' + i));
+    const errorMsg = document.getElementById('pin-error-msg');
+    const okBtn = document.getElementById('pin-ok-btn');
+
+    function simpleHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) {
+        h = ((h << 5) - h) + str.charCodeAt(i);
+        h |= 0;
+      }
+      return 'h' + h;
+    }
+
+    function updatePinUI() {
+      pinDots.forEach((dot, i) => {
+        dot.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+      });
+      if (pinBuffer.length === 4) {
+        okBtn.classList.remove('hidden');
+      } else {
+        okBtn.classList.add('hidden');
+      }
+    }
+
+    window._pinUnlock = function() {
+      pinOverlay.classList.add('hidden');
+      document.body.style.overflow = '';
+    };
+
+    pinOverlay.querySelectorAll('.pin-key').forEach(key => {
+      key.addEventListener('click', () => {
+        const val = key.dataset.value;
+        if (val === 'clear') {
+          pinBuffer = [];
+          errorMsg.classList.add('hidden');
+          updatePinUI();
+          return;
+        }
+        if (val === 'ok') {
+          const entered = pinBuffer.join('');
+          errorMsg.classList.add('hidden');
+          if (simpleHash(entered) === pinHash) {
+            window._pinUnlock();
+          } else {
+            errorMsg.classList.remove('hidden');
+            pinDots.forEach(d => d.classList.add('error'));
+            setTimeout(() => pinDots.forEach(d => d.classList.remove('error')), 500);
+            pinBuffer = [];
+            updatePinUI();
+          }
+          return;
+        }
+        if (pinBuffer.length < 4 && /^\d$/.test(val)) {
+          pinBuffer.push(val);
+          errorMsg.classList.add('hidden');
+          updatePinUI();
+        }
+      });
+    });
+
+    pinOverlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
   // Element Selections
   const elements = {
     // Navigation Tabs
@@ -1193,6 +1264,72 @@ document.addEventListener("DOMContentLoaded", async () => {
       const key = document.getElementById('pix-key').value.trim();
       localStorage.setItem('CONDO_PIX_KEY', key);
       showToast('success', 'Pix Salvo', 'Chave Pix configurada com sucesso!');
+    });
+  }
+
+  // ==========================================================================
+  // PIN PROTECTION CONFIG
+  // ==========================================================================
+
+  function simpleHash(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+      h = ((h << 5) - h) + str.charCodeAt(i);
+      h |= 0;
+    }
+    return 'h' + h;
+  }
+
+  const pinInput = document.getElementById('pin-code-input');
+  const pinToggle = document.getElementById('pin-enabled-toggle');
+  const pinStatusText = document.getElementById('pin-status-text');
+  const btnSavePin = document.getElementById('btn-save-pin');
+
+  if (pinToggle && pinStatusText) {
+    const isEnabled = localStorage.getItem('CONDO_PIN_ENABLED') === 'true';
+    pinToggle.checked = isEnabled;
+    pinStatusText.textContent = isEnabled ? 'Proteção ativada' : 'Proteção desativada';
+
+    pinToggle.addEventListener('change', () => {
+      const enabled = pinToggle.checked;
+      localStorage.setItem('CONDO_PIN_ENABLED', enabled ? 'true' : 'false');
+      pinStatusText.textContent = enabled ? 'Proteção ativada' : 'Proteção desativada';
+      if (enabled && !localStorage.getItem('CONDO_PIN')) {
+        showToast('warning', 'Configure o PIN', 'Defina um PIN de 4 dígitos antes de ativar a proteção.');
+        pinToggle.checked = false;
+        localStorage.setItem('CONDO_PIN_ENABLED', 'false');
+        pinStatusText.textContent = 'Proteção desativada';
+      }
+      if (!enabled) {
+        showToast('info', 'PIN Desativado', 'A proteção por PIN foi desativada.');
+      } else {
+        showToast('success', 'PIN Ativado', 'A proteção por PIN foi ativada.');
+      }
+    });
+  }
+
+  if (btnSavePin && pinInput) {
+    // Load saved PIN for display indicator
+    if (localStorage.getItem('CONDO_PIN')) {
+      pinInput.placeholder = '•••• (PIN já configurado)';
+    }
+
+    btnSavePin.addEventListener('click', () => {
+      const pin = pinInput.value.trim();
+      if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+        showToast('error', 'PIN Inválido', 'Digite exatamente 4 dígitos numéricos.');
+        return;
+      }
+      const hash = simpleHash(pin);
+      localStorage.setItem('CONDO_PIN', hash);
+      localStorage.setItem('CONDO_PIN_ENABLED', 'true');
+      pinInput.value = '';
+      pinInput.placeholder = '•••• (PIN já configurado)';
+      if (pinToggle) {
+        pinToggle.checked = true;
+        pinStatusText.textContent = 'Proteção ativada';
+      }
+      showToast('success', 'PIN Salvo', 'PIN de proteção configurado com sucesso!');
     });
   }
 

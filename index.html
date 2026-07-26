@@ -219,6 +219,30 @@
           </div>
         </div>
 
+        <!-- Financial Projection -->
+        <div class="glass-container mt-2">
+          <div class="box-header">
+            <h2>🔮 Projeção Financeira</h2>
+          </div>
+          <div class="projection-grid" id="projection-grid">
+            <div class="proj-item">
+              <span class="proj-month" id="proj-month-1">Mês 1</span>
+              <span class="proj-value" id="proj-value-1">R$ 0,00</span>
+              <span class="proj-desc">Saldo projetado</span>
+            </div>
+            <div class="proj-item">
+              <span class="proj-month" id="proj-month-2">Mês 2</span>
+              <span class="proj-value" id="proj-value-2">R$ 0,00</span>
+              <span class="proj-desc">Saldo projetado</span>
+            </div>
+            <div class="proj-item">
+              <span class="proj-month" id="proj-month-3">Mês 3</span>
+              <span class="proj-value" id="proj-value-3">R$ 0,00</span>
+              <span class="proj-desc">Saldo projetado</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Recent Transactions -->
         <div class="glass-container mt-2">
           <div class="box-header">
@@ -683,6 +707,31 @@
             </div>
           </div>
 
+          <!-- PIN Protection -->
+          <div class="glass-container">
+            <div class="box-header">
+              <h2><i class='bx bx-lock-alt'></i> Proteção por PIN</h2>
+            </div>
+            <p class="config-desc">Proteja o acesso ao aplicativo com um PIN de 4 dígitos. Os dados financeiros ficarão bloqueados até a digitação do código.</p>
+            <div class="pin-config-row mt-2">
+              <div class="form-group" style="flex:1">
+                <label>PIN de 4 dígitos</label>
+                <input type="password" id="pin-code-input" class="form-control-sm" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="****">
+              </div>
+              <div class="form-group" style="flex:0 0 auto; justify-content: flex-end;">
+                <label style="opacity:0;">Ativar</label>
+                <button class="btn btn-sm btn-primary" id="btn-save-pin"><i class="bx bx-check"></i> Salvar PIN</button>
+              </div>
+            </div>
+            <div class="pin-toggle-row mt-1">
+              <label class="toggle-switch" style="display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0; background:none; border:none;">
+                <input type="checkbox" id="pin-enabled-toggle">
+                <span class="toggle-slider"></span>
+                <span id="pin-status-text">Proteção desativada</span>
+              </label>
+            </div>
+          </div>
+
           <!-- App Data Control -->
           <div class="glass-container">
             <div class="box-header">
@@ -728,6 +777,38 @@
 
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
+
+    <!-- PIN UNLOCK OVERLAY -->
+    <div class="pin-overlay hidden" id="pin-unlock-overlay">
+      <div class="pin-unlock-box">
+        <div class="pin-unlock-header">
+          <i class="bx bx-lock-alt"></i>
+          <h2>GestãoApp Bloqueado</h2>
+          <p>Digite o PIN para desbloquear</p>
+        </div>
+        <div class="pin-dots" id="pin-dots">
+          <span class="pin-dot" id="pin-dot-0"></span>
+          <span class="pin-dot" id="pin-dot-1"></span>
+          <span class="pin-dot" id="pin-dot-2"></span>
+          <span class="pin-dot" id="pin-dot-3"></span>
+        </div>
+        <div class="pin-error hidden" id="pin-error-msg">PIN incorreto. Tente novamente.</div>
+        <div class="pin-numpad" id="pin-numpad">
+          <button class="pin-key" data-value="1">1</button>
+          <button class="pin-key" data-value="2">2</button>
+          <button class="pin-key" data-value="3">3</button>
+          <button class="pin-key" data-value="4">4</button>
+          <button class="pin-key" data-value="5">5</button>
+          <button class="pin-key" data-value="6">6</button>
+          <button class="pin-key" data-value="7">7</button>
+          <button class="pin-key" data-value="8">8</button>
+          <button class="pin-key" data-value="9">9</button>
+          <button class="pin-key pin-key-clear" data-value="clear"><i class="bx bx-backspace"></i></button>
+          <button class="pin-key" data-value="0">0</button>
+          <button class="pin-key pin-key-ok hidden" id="pin-ok-btn"><i class="bx bx-check"></i></button>
+        </div>
+      </div>
+    </div>
 
   <!-- POPUP MODAL: QUICK TRANSACTION -->
   <div class="modal-overlay hidden" id="modal-quick-transaction">
