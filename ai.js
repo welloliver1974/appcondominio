@@ -14,7 +14,7 @@ class CondoAI {
 
     if (!apiUrl || !apiKey || !model) {
       return {
-        message: "🤖 **Atenção:** A Inteligência Artificial ainda não foi configurada. Por favor, vá na aba de **Configurações**, na seção 'Inteligência Artificial (LLM)', e insira sua Base URL, Modelo e API Key.",
+        message: "**Atenção:** A Inteligência Artificial ainda não foi configurada. Vá na aba de **Configurações**, na seção 'Inteligência Artificial (LLM)', e insira sua Base URL, Modelo e API Key.",
         actionExecuted: false
       };
     }
@@ -162,7 +162,7 @@ Nunca retorne o JSON se não for para salvar/alterar o banco.`;
           const cleanMessage = assistantMessage.replace(/```json\s*[\s\S]*?\s*```/, "").trim();
           
           return {
-            message: cleanMessage || "🤖 Transação registrada com sucesso!",
+            message: cleanMessage || "Transação registrada com sucesso",
             actionExecuted: true,
             payload: jsonBlock.payload
           };

@@ -3,6 +3,17 @@
  */
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const formatBRL = (value) => Number(value || 0).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  const formatCompact = (value) => {
+    const n = Number(value) || 0;
+    if (Math.abs(n) < 1000) return String(Math.round(n));
+    return `${(n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil`;
+  };
+
   // Initialize Database
   window.condoDb.initializeLocalDB();
 
@@ -337,8 +348,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const saldoCaixa = totalReceitas - totalDespesas;
     
     // Update stats elements
-    elements.valSaldoCaixa.textContent = `R$ ${saldoCaixa.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-    elements.valFundoReserva.textContent = `R$ ${reserva.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    elements.valSaldoCaixa.textContent = `R$ ${formatBRL(saldoCaixa)}`;
+    elements.valFundoReserva.textContent = `R$ ${formatBRL(reserva)}`;
     
     // Month summary cards
     let monthReceitasVal = 0;
@@ -352,10 +363,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
-    elements.valReceitasMes.textContent = `R$ ${monthReceitasVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    elements.valReceitasMes.textContent = `R$ ${formatBRL(monthReceitasVal)}`;
     elements.valReceitasCount.textContent = `${receitasCount} entrada(s) este mês`;
     
-    elements.valDespesasMes.textContent = `R$ ${monthDespesasVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    elements.valDespesasMes.textContent = `R$ ${formatBRL(monthDespesasVal)}`;
     elements.valDespesasCount.textContent = `${despesasCount} saída(s) este mês`;
 
     // Monthly Summary (Resumo do Mês)
@@ -365,21 +376,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pagos = residents.filter(r => r.status_pagamento === "pago").length;
 
     if (summaryEl("summary-receitas")) {
-      summaryEl("summary-receitas").textContent = `R$ ${monthReceitasVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      summaryEl("summary-receitas").textContent = `R$ ${formatBRL(monthReceitasVal)}`;
     }
     if (summaryEl("summary-despesas")) {
-      summaryEl("summary-despesas").textContent = `R$ ${monthDespesasVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      summaryEl("summary-despesas").textContent = `R$ ${formatBRL(monthDespesasVal)}`;
     }
     if (summaryEl("summary-saldo-mes")) {
       const saldoEl = summaryEl("summary-saldo-mes");
-      saldoEl.textContent = `R$ ${mesSaldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      saldoEl.textContent = `R$ ${formatBRL(mesSaldo)}`;
       saldoEl.style.color = mesSaldo >= 0 ? "var(--emerald)" : "var(--rose)";
     }
     if (summaryEl("summary-condominios")) {
       summaryEl("summary-condominios").textContent = `${pagos}/${totalCondominios} pagos`;
     }
     if (summaryEl("summary-reserva")) {
-      summaryEl("summary-reserva").textContent = `R$ ${reserva.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      summaryEl("summary-reserva").textContent = `R$ ${formatBRL(reserva)}`;
     }
 
     // Compare with previous month
@@ -442,7 +453,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const projValEl = projEl('proj-value-' + m);
         const projMonthEl = projEl('proj-month-' + m);
         if (projValEl) {
-          projValEl.textContent = `R$ ${projSaldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+          projValEl.textContent = `R$ ${formatBRL(projSaldo)}`;
           projValEl.className = 'proj-value ' + (projSaldo >= 0 ? 'positive' : 'negative');
         }
         if (projMonthEl) {
@@ -492,7 +503,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const dayMs = 86400000;
 
       for (let i = 0; i < firstDay; i++) {
-        html += '<div class="cal-day other-month"></div>';
+        html += '<div class="cal-day other-month" aria-hidden="true"></div>';
       }
 
       for (let d = 1; d <= daysInMonth; d++) {
@@ -511,10 +522,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (hasDue || paidVal) cls += ' has-bill';
 
         let badge = '';
-        if (paidVal) badge = `<span class="cal-badge">R$ ${paidVal.toFixed(0)}</span>`;
-        else if (hasDue) badge = `<span class="cal-badge">${hasDue.length}</span>`;
+        const notes = [];
+        if (paidVal) {
+          badge = `<span class="cal-badge">R$ ${Math.round(paidVal).toLocaleString('pt-BR')}</span>`;
+          notes.push(`pagamento de R$ ${formatBRL(paidVal)}`);
+        } else if (hasDue) {
+          badge = `<span class="cal-badge">${hasDue.length}</span>`;
+          notes.push(`${hasDue.length} conta(s) a vencer`);
+        }
+        if (isOverdue) notes.push('vencida');
 
-        html += `<div class="${cls}">${d}${badge}</div>`;
+        const label = `${d} de ${now.toLocaleDateString('pt-BR', { month: 'long' })}${notes.length ? ' - ' + notes.join(', ') : ''}`;
+        const todayAttr = isToday ? ' aria-current="date"' : '';
+
+        html += `<div class="${cls}" role="gridcell" aria-label="${label}"${todayAttr}>${d}${badge}</div>`;
       }
 
       calGrid.innerHTML = html;
@@ -554,9 +575,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     upcomingBills.forEach(bill => {
       const dueDay = bill.dia_vencimento;
       const diff = dueDay - currentDay;
-      const daysText = diff === 0 ? "vence HOJE!" : `vence em ${diff} dia(s)`;
+      const daysText = diff === 0 ? "vence hoje" : `vence em ${diff} dia(s)`;
       const catLabel = bill.categoria.charAt(0).toUpperCase() + bill.categoria.slice(1).replace("_", " ");
-      const valorText = bill.valor ? `R$ ${bill.valor.toFixed(2)}` : "valor variável";
+      const valorText = bill.valor ? `R$ ${formatBRL(bill.valor)}` : "valor variável";
 
       const alertItem = document.createElement("div");
       alertItem.className = "alert-item";
@@ -585,12 +606,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         alertItem.className = "alert-item";
         const pixKey = localStorage.getItem('CONDO_PIX_KEY') || '';
         const monthName = todayDate.toLocaleDateString('pt-BR', { month: 'long' });
-        const whatsMsg = `Olá ${u.morador}, o condomínio do Apto ${u.apto} no valor de R$ ${u.valor.toFixed(2)} referente a ${monthName} está pendente.${pixKey ? `\n\nPix para pagamento: ${pixKey}` : ''}\n\nObrigado!`;
+        const whatsMsg = `Olá ${u.morador}, o condomínio do Apto ${u.apto} no valor de R$ ${formatBRL(u.valor)} referente a ${monthName} está pendente.${pixKey ? `\n\nPix para pagamento: ${pixKey}` : ''}\n\nObrigado!`;
         alertItem.innerHTML = `
           <i class="bx bx-time-five alert-icon warning"></i>
           <div class="alert-content">
             <h4>Pendência: Apto ${u.apto}</h4>
-            <p>${u.morador} - Condomínio de R$ ${u.valor.toFixed(2)} não identificado.</p>
+            <p>${u.morador} - Condomínio de R$ ${formatBRL(u.valor)} não identificado.</p>
           </div>
           <div class="alert-actions">
             <button class="btn btn-sm btn-whatsapp" data-phone="${u.telefone}" data-msg="${encodeURIComponent(whatsMsg)}">
@@ -611,10 +632,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       const alertItem = document.createElement("div");
       alertItem.className = "alert-item";
       alertItem.innerHTML = `
-        <i class="bx bx-error alert-icon warning" style="color: var(--rose); background: var(--rose-glow)"></i>
+        <i class="bx bx-error alert-icon warning" style="color: var(--rose)"></i>
         <div class="alert-content">
           <h4>Saldo de Caixa Baixo</h4>
-          <p>O caixa atual possui apenas R$ ${saldoCaixa.toFixed(2)}. Evite novos gastos.</p>
+          <p>O caixa atual possui apenas R$ ${formatBRL(saldoCaixa)}. Evite novos gastos.</p>
         </div>
       `;
       elements.dashboardAlerts.appendChild(alertItem);
@@ -624,7 +645,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       elements.dashboardAlerts.innerHTML = `
         <div class="alert-empty-state">
           <i class="bx bx-badge-check"></i>
-          <p>Tudo sob controle! Sem pendências urgentes.</p>
+          <p>Tudo sob controle. Sem pendências urgentes.</p>
         </div>
       `;
     } else {
@@ -679,11 +700,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       tr.innerHTML = `
         <td>${formatDateBR(t.data)}</td>
-        <td><span class="badge ${badgeClass}">${t.tipo.toUpperCase()}</span></td>
+        <td><span class="badge ${badgeClass}">${t.tipo === "receita" ? "Receita" : "Despesa"}</span></td>
         <td><span class="cat-chip cat-${t.categoria}">${t.categoria.replace("_", " ")}</span></td>
         <td>${t.descricao}</td>
         <td>${t.apto_id ? `Apto ${t.apto_id}` : "Geral"}</td>
-        <td class="${valueClass} font-bold">${sign} R$ ${t.valor.toFixed(2)}</td>
+        <td class="${valueClass} font-bold">${sign} R$ ${formatBRL(t.valor)}</td>
       `;
       listContainer.appendChild(tr);
     });
@@ -732,6 +753,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const padding = 40;
     const graphWidth = width - padding * 2;
     const graphHeight = height - padding * 2;
+    const chartSurface = getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim();
 
     // Find Max Value for scaling
     let maxVal = 500; // default minimum scale
@@ -759,8 +781,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const y = padding + (graphHeight / 3) * i;
       const valLabel = maxVal - (maxVal / 3) * i;
       svg.innerHTML += `
-        <line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="4" />
-        <text x="${padding - 5}" y="${y + 4}" fill="var(--text-muted)" font-size="10" text-anchor="end">R$ ${Math.round(valLabel)}</text>
+        <line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="var(--border-light)" stroke-width="1" />
+        <text x="${padding - 8}" y="${y + 4}" fill="var(--text-muted)" font-size="10" text-anchor="end">R$ ${formatCompact(valLabel)}</text>
       `;
     }
 
@@ -775,27 +797,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Draw Receitas Path (green)
     const recPathD = receitaPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(" ");
     svg.innerHTML += `
-      <path d="${recPathD}" fill="none" stroke="var(--emerald)" stroke-width="3" stroke-linecap="round" filter="drop-shadow(0px 3px 6px rgba(16, 185, 129, 0.3))" />
+      <path d="${recPathD}" fill="none" stroke="var(--emerald)" stroke-width="2" stroke-linecap="round" />
     `;
 
     // Draw Despesas Path (rose)
     const desPathD = despesaPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(" ");
     svg.innerHTML += `
-      <path d="${desPathD}" fill="none" stroke="var(--rose)" stroke-width="3" stroke-linecap="round" filter="drop-shadow(0px 3px 6px rgba(244, 63, 94, 0.3))" />
+      <path d="${desPathD}" fill="none" stroke="var(--rose)" stroke-width="2" stroke-linecap="round" />
     `;
 
     // Draw interactive circular points
     receitaPoints.forEach(p => {
       svg.innerHTML += `
-        <circle cx="${p.cx || p.x}" cy="${p.cy || p.y}" r="5" fill="#0b0f19" stroke="var(--emerald)" stroke-width="3" />
-        <title>Receitas: R$ ${p.val.toFixed(2)}</title>
+        <circle cx="${p.cx || p.x}" cy="${p.cy || p.y}" r="5" fill="${chartSurface}" stroke="var(--emerald)" stroke-width="2" />
+        <title>Receitas: R$ ${formatBRL(p.val)}</title>
       `;
     });
 
     despesaPoints.forEach(p => {
       svg.innerHTML += `
-        <circle cx="${p.x}" cy="${p.y}" r="5" fill="#0b0f19" stroke="var(--rose)" stroke-width="3" />
-        <title>Despesas: R$ ${p.val.toFixed(2)}</title>
+        <circle cx="${p.x}" cy="${p.y}" r="5" fill="${chartSurface}" stroke="var(--rose)" stroke-width="2" />
+        <title>Despesas: R$ ${formatBRL(p.val)}</title>
       `;
     });
   }
@@ -891,9 +913,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           
           tr.innerHTML = `
             <td>${formatDateBR(t.data)}</td>
-            <td><span class="badge ${t.tipo === "receita" ? 'badge-success' : 'badge-warning'}">${t.tipo.toUpperCase()}</span></td>
+            <td><span class="badge ${t.tipo === "receita" ? 'badge-success' : 'badge-warning'}">${t.tipo === "receita" ? "Receita" : "Despesa"}</span></td>
             <td>${t.descricao}</td>
-            <td class="${valClass} font-bold">${sign} R$ ${t.valor.toFixed(2)}</td>
+            <td class="${valClass} font-bold">${sign} R$ ${formatBRL(t.valor)}</td>
           `;
           listContainer.appendChild(tr);
         });
@@ -930,15 +952,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       const monthName = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
       let extrato = `*Extrato do Apto ${apto} - ${unit.morador}*\n`;
-      extrato += `📅 ${monthName}\n`;
-      extrato += `💵 Valor mensal: R$ ${unit.valor.toFixed(2)}\n`;
-      extrato += `📌 Status: ${unit.status_pagamento === "pago" ? "✅ Em dia" : "⏳ Pendente"}\n`;
-      extrato += `💰 Total pago: R$ ${totalPago.toFixed(2)}\n`;
+      extrato += `Mês: ${monthName}\n`;
+      extrato += `Valor mensal: R$ ${formatBRL(unit.valor)}\n`;
+      extrato += `Status: ${unit.status_pagamento === "pago" ? "Em dia" : "Pendente"}\n`;
+      extrato += `Total pago: R$ ${formatBRL(totalPago)}\n`;
       if (unitTrans.length > 0) {
         extrato += `\n*Últimos lançamentos:*\n`;
         unitTrans.slice(0, 5).forEach(t => {
           const sinal = t.tipo === "receita" ? "+" : "-";
-          extrato += `  ${t.data} ${sinal} R$ ${t.valor.toFixed(2)} - ${t.descricao}\n`;
+          extrato += `  ${t.data} ${sinal} R$ ${formatBRL(t.valor)} - ${t.descricao}\n`;
         });
       }
 
@@ -967,7 +989,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Update Detail UI status
       elements.apartmentDetailsSection.classList.add("hidden");
       elements.apartmentCards.forEach(c => c.classList.remove("active"));
-      showToast('success', 'Atualização', `Informações do Apto ${apto} atualizadas com sucesso!`);
+      showToast('success', 'Atualização', `Informações do Apto ${apto} atualizadas`);
     });
   }
 
@@ -1000,11 +1022,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       tr.innerHTML = `
         <td>${formatDateBR(t.data)}</td>
-        <td><span class="badge ${t.tipo === "receita" ? 'badge-success' : 'badge-warning'}">${t.tipo.toUpperCase()}</span></td>
-        <td>${t.categoria.toUpperCase()}</td>
+        <td><span class="badge ${t.tipo === "receita" ? 'badge-success' : 'badge-warning'}">${t.tipo === "receita" ? "Receita" : "Despesa"}</span></td>
+        <td>${t.categoria.replace("_", " ")}</td>
         <td>${t.descricao}</td>
         <td>${t.apto_id ? `Apto ${t.apto_id}` : "Geral"}</td>
-        <td class="${valClass} font-bold">${sign} R$ ${t.valor.toFixed(2)}</td>
+        <td class="${valClass} font-bold">${sign} R$ ${formatBRL(t.valor)}</td>
         <td>
           <button class="table-btn-delete" data-id="${t.id}">
             <i class="bx bx-trash"></i>
@@ -1085,7 +1107,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Close modal if open
       elements.modalQuickTransaction.classList.add("hidden");
 
-      showToast('success', wasEditing ? 'Lançamento Atualizado' : 'Lançamento Registrado', wasEditing ? 'Lançamento financeiro atualizado com sucesso!' : 'Lançamento financeiro registrado com sucesso!');
+      showToast('success', wasEditing ? 'Lançamento atualizado' : 'Lançamento registrado', wasEditing ? 'Lançamento financeiro atualizado' : 'Lançamento financeiro registrado');
     });
   }
 
@@ -1248,7 +1270,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                   localStorage.setItem(`CONDO_RECEIPT_${newTrans.id}`, imagePayload);
                 }
                 const cleanMessage = response.message.replace(/```json\s*[\s\S]*?\s*```/, "").trim();
-                streamContent.textContent = cleanMessage || "Transação registrada com sucesso!";
+                streamContent.textContent = cleanMessage || "Transação registrada com sucesso";
                 updateDashboardData();
               }
             } catch (e) {
@@ -1258,7 +1280,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             streamContent.textContent = response.message;
           }
         } catch (error) {
-          streamContent.innerHTML = "🤖 **Erro:** Não foi possível me conectar com o provedor de IA. Verifique as configurações (URL e API Key).";
+          streamContent.innerHTML = "**Erro:** Não foi possível me conectar com o provedor de IA. Verifique as configurações (URL e API Key).";
           streamMsgEl.querySelector(".stream-cursor")?.remove();
           console.error(error);
         }
@@ -1298,7 +1320,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     msg.className = "chat-msg system";
     msg.innerHTML = `
       <div class="msg-avatar"><i class="bx bxs-bot"></i></div>
-      <div class="msg-bubble">🤖 <em>Pensando...</em></div>
+      <div class="msg-bubble"><em>Pensando...</em></div>
     `;
     container.appendChild(msg);
     container.scrollTop = container.scrollHeight;
@@ -1332,7 +1354,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         await window.condoDb.connectTurso(url, token);
         updateDbStatusBadge();
-        showToast('success', 'Turso Conectado!', 'Seus dados foram sincronizados com o banco na nuvem.');
+        showToast('success', 'Turso conectado', 'Seus dados foram sincronizados com o banco na nuvem.');
         updateDashboardData();
       } catch (err) {
         showToast('error', 'Erro de Conexão', err.message);
@@ -1412,7 +1434,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       residents.forEach(r => { r.valor = value; });
       localStorage.setItem('CONDO_RESIDENTS', JSON.stringify(residents));
 
-      showToast('success', 'Valor Atualizado', `Taxa de condomínio definida como R$ ${value.toFixed(2)} para todas as unidades.`);
+      showToast('success', 'Valor Atualizado', `Taxa de condomínio definida como R$ ${formatBRL(value)} para todas as unidades.`);
     });
   }
 
@@ -1433,7 +1455,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       e.preventDefault();
       const key = document.getElementById('pix-key').value.trim();
       localStorage.setItem('CONDO_PIX_KEY', key);
-      showToast('success', 'Pix Salvo', 'Chave Pix configurada com sucesso!');
+      showToast('success', 'Pix salvo', 'Chave Pix configurada');
     });
   }
 
@@ -1499,7 +1521,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         pinToggle.checked = true;
         pinStatusText.textContent = 'Proteção ativada';
       }
-      showToast('success', 'PIN Salvo', 'PIN de proteção configurado com sucesso!');
+      showToast('success', 'PIN salvo', 'PIN de proteção configurado');
     });
   }
 
@@ -1710,7 +1732,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         const count = await window.condoDb.generateMonthlyBills();
         if (count > 0) {
-          showToast('success', 'Contas Geradas!', `${count} conta(s) fixa(s) foram criadas para este mês.`);
+          showToast('success', 'Contas geradas', `${count} conta(s) fixa(s) foram criadas para este mês.`);
           updateDashboardData();
         } else {
           showToast('info', 'Mês já Gerado', 'As contas deste mês já foram geradas anteriormente.');
@@ -1747,13 +1769,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         const alertItem = document.createElement("div");
         alertItem.className = "alert-item";
         alertItem.innerHTML = `
-          <i class="bx bx-calendar-exclamation alert-icon warning" style="color: var(--cyan); background: var(--cyan-glow)"></i>
+          <i class="bx bx-calendar-exclamation alert-icon warning" style="color: var(--cyan)"></i>
           <div class="alert-content">
             <h4>Contas do Mês</h4>
             <p>As contas fixas de ${today.toLocaleDateString('pt-BR', { month: 'long' })} ainda não foram geradas.</p>
           </div>
           <button class="btn btn-primary btn-sm" id="btn-gen-bills-from-dash">
-            <i class="bx bx-calendar-check"></i> Gerar Agora
+            <i class="bx bx-calendar-check"></i> Gerar agora
           </button>
         `;
         alertsContainer.prepend(alertItem);
@@ -1761,7 +1783,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("btn-gen-bills-from-dash")?.addEventListener("click", async () => {
           await window.condoDb.generateMonthlyBills();
           updateDashboardData();
-          showToast('success', 'Contas Geradas!', 'Contas fixas do mês registradas com sucesso.');
+          showToast('success', 'Contas geradas', 'Contas fixas do mês registradas.');
         });
       }
     }
@@ -1780,9 +1802,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         const alertItem = document.createElement("div");
         alertItem.className = "alert-item";
         alertItem.innerHTML = `
-          <i class="bx bx-bell alert-icon warning" style="color:var(--amber);background:var(--amber-glow);"></i>
+          <i class="bx bx-bell alert-icon warning" style="color:var(--amber);"></i>
           <div class="alert-content">
-            <h4>📌 Lembrete${dueToday.length > 1 ? 's' : ''} Hoje</h4>
+            <h4>Lembrete${dueToday.length > 1 ? 's' : ''} hoje</h4>
             <p>${dueToday.map(r => escHtml(r.desc)).join(', ')}</p>
           </div>
         `;
@@ -1790,7 +1812,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       if ("Notification" in window && Notification.permission === "granted") {
         dueToday.forEach(r => {
-          new Notification("📌 Lembrete", {
+          new Notification("Lembrete", {
             body: r.desc,
             icon: "./icons/icon-192.png"
           });
@@ -1803,9 +1825,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         const alertItem = document.createElement("div");
         alertItem.className = "alert-item";
         alertItem.innerHTML = `
-          <i class="bx bx-error alert-icon warning" style="color:var(--rose);background:var(--rose-glow);"></i>
+          <i class="bx bx-error alert-icon warning" style="color:var(--rose);"></i>
           <div class="alert-content">
-            <h4>⚠️ ${overdue.length} Lembrete${overdue.length > 1 ? 's' : ''} Atrasado${overdue.length > 1 ? 's' : ''}</h4>
+            <h4>${overdue.length} lembrete${overdue.length > 1 ? 's' : ''} atrasado${overdue.length > 1 ? 's' : ''}</h4>
             <p>${overdue.map(r => `${escHtml(r.desc)} (${new Date(r.date + 'T12:00:00').toLocaleDateString('pt-BR')})`).join(', ')}</p>
           </div>
         `;
@@ -1845,7 +1867,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           const parsed = JSON.parse(event.target.result);
           showConfirmModal("Importar esse backup irá sobrescrever seus dados atuais. Confirmar?", () => {
             window.condoDb.importBackup(parsed);
-            showToast('success', 'Backup Restaurado', 'Backup importado com sucesso! Recarregando...');
+            showToast('success', 'Backup restaurado', 'Backup importado. Recarregando...');
             setTimeout(() => location.reload(), 1500);
           });
         } catch (err) {
@@ -1861,7 +1883,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.btnResetData.addEventListener("click", () => {
       showConfirmModal("Tem certeza que deseja apagar TODOS os lançamentos e restaurar moradores padrão? Esta ação não pode ser desfeita.", () => {
         window.condoDb.resetToDefault();
-        showToast('success', 'Restaurado', 'Configurações originais restauradas!');
+        showToast('success', 'Restaurado', 'Configurações originais restauradas');
         setTimeout(() => location.reload(), 1500);
       });
     });
@@ -1915,7 +1937,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td><span class="badge ${t.tipo === 'receita' ? 'badge-success' : 'badge-danger'}">${t.tipo === 'receita' ? 'Receita' : 'Despesa'}</span></td>
           <td>${t.categoria.replace('_', ' ')}</td>
           <td>${t.descricao || '—'}</td>
-          <td style="color:${t.tipo === 'receita' ? 'var(--emerald)' : 'var(--rose)'}">R$ ${t.valor.toFixed(2)}</td>
+          <td style="color:${t.tipo === 'receita' ? 'var(--emerald)' : 'var(--rose)'}">R$ ${formatBRL(t.valor)}</td>
           <td>${delDate}</td>
           <td class="table-actions">
             <button class="btn btn-sm btn-icon-only btn-restore-trash" data-id="${t.id}" title="Restaurar"><i class="bx bx-refresh"></i></button>
@@ -1928,7 +1950,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
           await window.condoDb.restoreTransaction(id);
-          showToast('success', 'Restaurado', 'Lançamento restaurado com sucesso!');
+          showToast('success', 'Restaurado', 'Lançamento restaurado');
           loadTrashItems();
           updateDashboardData();
           loadTransactionsList();
@@ -1993,8 +2015,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Low balance alert
     if (saldo < 100 && transactions.length > 0) {
-      new Notification("⚠️ Saldo em Caixa Baixo", {
-        body: `O saldo atual é de R$ ${saldo.toFixed(2)}. Evite novos gastos.`,
+      new Notification("Saldo em caixa baixo", {
+        body: `O saldo atual é de R$ ${formatBRL(saldo)}. Evite novos gastos.`,
         icon: "./icons/icon-192.png"
       });
       notifiedThisSession = true;
@@ -2004,7 +2026,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Pending residents alert (only configured units with names)
     const pendentes = residents.filter(r => r.status_pagamento !== "pago" && r.morador);
     if (pendentes.length > 0) {
-      new Notification("🏠 Condomínio Pendente", {
+      new Notification("Condomínio pendente", {
         body: `${pendentes.length} unidade(s) com pagamento pendente: ${pendentes.map(r => `Apto ${r.apto} (${r.morador})`).join(", ")}`,
         icon: "./icons/icon-192.png"
       });
@@ -2015,7 +2037,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Monthly bills not generated
     const monthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
     if (window.condoDb.getLastGeneratedMonth && window.condoDb.getLastGeneratedMonth() !== monthKey) {
-      new Notification("📋 Contas do Mês", {
+      new Notification("Contas do mês", {
         body: "As contas fixas deste mês ainda não foram geradas. Vá em Ajustes para gerar.",
         icon: "./icons/icon-192.png"
       });
@@ -2108,25 +2130,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         .sub { color: #666; font-size: 14px; margin-bottom: 30px; }
         .grid { display: flex; gap: 16px; margin-bottom: 30px; flex-wrap: wrap; }
         .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px; min-width: 130px; flex: 1; }
-        .card-label { font-size: 12px; color: #888; text-transform: uppercase; }
-        .card-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+        .card-label { font-size: 12px; color: #888; }
+        .card-value { font-size: 22px; font-weight: 500; margin-top: 4px; }
         .green { color: #10b981; } .red { color: #f43f5e; } .blue { color: #6366f1; }
         h2 { font-size: 18px; margin-top: 30px; margin-bottom: 12px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 13px; }
-        th { color: #888; font-weight: 600; }
+        th { color: #888; font-weight: 500; }
         .footer { margin-top: 40px; font-size: 12px; color: #aaa; border-top: 1px solid #eee; padding-top: 15px; }
       </style></head>
       <body>
-        <h1>📊 Relatório Mensal - Condomínio</h1>
+        <h1>Relatório mensal - Condomínio</h1>
         <div class="sub">${monthName} • Gerado em ${now.toLocaleDateString('pt-BR')}</div>
 
         <div class="grid">
-          <div class="card"><div class="card-label">Receitas</div><div class="card-value green">R$ ${receitas.toFixed(2)}</div></div>
-          <div class="card"><div class="card-label">Despesas</div><div class="card-value red">R$ ${despesas.toFixed(2)}</div></div>
-          <div class="card"><div class="card-label">Saldo</div><div class="card-value ${saldo >= 0 ? 'blue' : 'red'}">R$ ${saldo.toFixed(2)}</div></div>
+          <div class="card"><div class="card-label">Receitas</div><div class="card-value green">R$ ${formatBRL(receitas)}</div></div>
+          <div class="card"><div class="card-label">Despesas</div><div class="card-value red">R$ ${formatBRL(despesas)}</div></div>
+          <div class="card"><div class="card-label">Saldo</div><div class="card-value ${saldo >= 0 ? 'blue' : 'red'}">R$ ${formatBRL(saldo)}</div></div>
           <div class="card"><div class="card-label">Condominios</div><div class="card-value">${pagos}/${total}</div></div>
-          <div class="card"><div class="card-label">Reserva</div><div class="card-value blue">R$ ${reserva.toFixed(2)}</div></div>
+          <div class="card"><div class="card-label">Reserva</div><div class="card-value blue">R$ ${formatBRL(reserva)}</div></div>
         </div>
 
         <h2>Lançamentos do Mês</h2>
@@ -2139,7 +2161,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               <td>${t.tipo === 'receita' ? 'Receita' : 'Despesa'}</td>
               <td>${t.categoria.replace('_', ' ')}</td>
               <td>${t.descricao}</td>
-              <td style="color:${t.tipo === 'receita' ? '#10b981' : '#f43f5e'}">${t.tipo === 'receita' ? '+' : '-'} R$ ${t.valor.toFixed(2)}</td>
+              <td style="color:${t.tipo === 'receita' ? '#10b981' : '#f43f5e'}">${t.tipo === 'receita' ? '+' : '-'} R$ ${formatBRL(t.valor)}</td>
             </tr>
           `).join('')}
         </table>`}
